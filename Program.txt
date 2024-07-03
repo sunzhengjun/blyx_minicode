@@ -1,0 +1,450 @@
+-- 先加载配置
+local ConfigManager = Component.Manager.ConfigManager
+G_ConfigManager = G_ConfigManager or ConfigManager.New()
+G_ConfigManager:Init()
+
+
+local GameManager = Component.Manager.GameManager
+local EntityManager = Component.Manager.EntityManager
+local MonsterManager = Component.Manager.MonsterManager
+local PlayerManager = Component.Manager.PlayerManager
+local LogManager = Component.Manager.LogManager
+local EventBlockManager = Component.Manager.EventBlockManager
+local NpcManager = Component.Manager.NpcManager
+local AreaManager = Component.Manager.AreaManager
+local RespawnManager = Component.Manager.RespawnManager
+local MapManager = Component.Manager.MapManager
+local RankManager = Component.Manager.RankManager
+-- local StageUpManager = Component.Manager.StageUpManager
+local GameOtherManager = Component.Manager.GameOtherManager
+local CollectManager = Component.Manager.CollectManager
+
+G_GameManager = G_GameManager or GameManager.New()
+G_EntityManager = G_EntityManager or EntityManager.New()
+-- G_MonsterManager = G_MonsterManager or MonsterManager.New()
+G_PlayerManager = G_PlayerManager or PlayerManager.New()
+G_LogManager = G_LogManager or LogManager.New()
+-- G_EventBlockManager = G_EventBlockManager or EventBlockManager.New()
+-- G_NpcManager = G_NpcManager or NpcManager.New()
+-- G_AreaManager = G_AreaManager or AreaManager.New()
+-- G_RespawnManager = G_RespawnManager or RespawnManager.New()
+-- G_MapManager = G_MapManager or MapManager.New()
+G_RankManager = G_RankManager or RankManager.New()
+-- G_StageUpManager = G_StageUpManager or StageUpManager.New()
+-- G_GameOtherManager = G_GameOtherManager or GameOtherManager.New()
+G_CollectManager = G_CollectManager or CollectManager.New()
+
+G_LogManager:Init()
+G_GameManager:Init()
+G_EntityManager:Init()
+-- G_MonsterManager:Init()
+G_PlayerManager:Init()
+-- G_AreaManager:Init()
+-- G_StageUpManager:Init()
+
+local function main()
+    local res, ret = pcall(function ()
+        -- G_MapManager:Init()
+        -- G_NpcManager:Init()
+        -- G_RespawnManager:Init()
+        G_RankManager:Init()
+        G_CollectManager:Init()
+        G_GameManager:GameInitDone()
+    
+    -- 保持最后
+        -- G_GameOtherManager:Init()
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerEnter(e)
+    local res, ret = pcall(function ()
+        G_GameManager:PlayerEnter(e.eventobjid)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnActorDie(e)
+    local res, ret = pcall(function ()
+        local id = e.eventobjid
+        local killer_id = e.toobjid
+        local actor_id = e.actorid or 0
+        G_EntityManager:OnActorDie(id, killer_id, actor_id)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function Update(e)
+    local second = e.second
+    local res, ret = pcall(function ()
+        G_GameManager:Update(second)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+
+    -- 数据单独开一个
+    local ret1, res1 = pcall(function ()
+        G_PlayerManager:PlayerDataUpdate(second)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerClickBlock(e)
+    local res, ret = pcall(function ()
+        local id = e.eventobjid
+        local pos = Vector3.New(e.x, e.y, e.z)
+        G_EventBlockManager:OnPlayerClick(id, pos)
+        -- player:OnClickBlock(e.blockid, pos)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerClickActor(e)
+    local res, ret = pcall(function ()
+        local target_id = e.toobjid
+        local player_id = e.eventobjid
+        G_EntityManager:OnPlayerClickActor(player_id, target_id)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerLeave(e)
+    local res, ret = pcall(function ()
+        G_GameManager:PlayerLeave(e.eventobjid)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerDamageActor(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local target_id = e.toobjid
+        -- local dmg = GetUnsignedNumber(e.hurtlv)
+        -- local dmg = math.abs(e.hurtlv)
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:OnDamageActor(target_id, 0)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerAreaIn(e)
+    local res, ret = pcall(function ()
+        local areaid = e.areaid
+        local player_id = e.eventobjid
+        G_AreaManager:EnterArea(player_id, areaid)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerAreaOut(e)
+    local res, ret = pcall(function ()
+        local areaid = e.areaid
+        local player_id = e.eventobjid
+        G_AreaManager:OutArea(player_id, areaid)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerDie(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:Die()
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerRevive(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:PlayerRevive()
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnActorBeHurt(e)
+    local res, ret = pcall(function ()
+        local id = e.eventobjid
+        local attacker_id = e.toobjid
+        local dmg = e.hurtlv
+        G_EntityManager:OnActorBeHurt(id, attacker_id, dmg)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerDefeatActor(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:DefeatActor(e.toobjid)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerNewInputContent(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:OnPlayerNewInputContent(e.content)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnActorCollide(e)
+    local res, ret = pcall(function ()
+        G_EntityManager:OnActorCollide(e.eventobjid, e.toobjid)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnActorBeat(e)
+    local res, ret = pcall(function ()
+        G_EntityManager:OnActorBeat(e.eventobjid, e.toobjid)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnActorAttackHit(e)
+    local res, ret = pcall(function ()
+        G_EntityManager:OnActorAttackHit(e.eventobjid, e.toobjid)
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnItemCreate(e)
+    local id = e.eventobjid
+    
+    -- Actor:playBodyEffect(id,1020)
+    Actor:playBodyEffectById(id,1020, 5)
+end
+
+local function OnPlayerUseItem(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            local item_id = e.itemid
+            local item_num = e.itemnum
+            local fast_slot_idx = e.CurEventParam.EventShortCutIdx
+            player:UseItem(item_id, item_num, fast_slot_idx)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerSelectShortcut(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            -- local item_id = e.itemid
+            -- local item_num = e.itemnum
+            -- local fast_slot_idx = e.CurEventParam.EventShortCutIdx
+            player:SelectShortcut()
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerDismountActor(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:DismountActor()
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerChangeAttr(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:OnAttrChange()
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerAttackHit(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local target_id = e.toobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:OnAttackHit(target_id)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerMountActor(e)
+    local res, ret = pcall(function ()
+        local player_id = e.eventobjid
+        local target_id = e.toobjid
+        local player = G_PlayerManager:GetPlayer(player_id)
+        if player then
+            player:OnMountActor(target_id)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnActorProjectileHit(e)
+    local res, ret = pcall(function ()
+        local obj_id = e.eventobjid
+        local entity = G_EntityManager:GetEntity(obj_id)
+        if entity then
+            entity:ProjectileHit(e)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnInputKeyDown(e)
+    local res, ret = pcall(function ()
+        local key = e.vkey
+        local player = G_PlayerManager:GetPlayer(e.eventobjid)
+        if player then
+            player.InputManager:OnKeyDown(key)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+local function OnPlayerBuyItem(e)
+    local res, ret = pcall(function ()
+        local dev_id = e.itemid
+        local player = G_PlayerManager:GetPlayer(e.eventobjid)
+        if player then
+            player:OnBuyDevItem(dev_id)
+            Player:removeBackpackItem(e.eventobjid , dev_id, 1)
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+ScriptSupportEvent:registerEvent("Game.Start", main)
+ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame", OnPlayerEnter)
+ScriptSupportEvent:registerEvent("Game.AnyPlayer.LeaveGame", OnPlayerLeave)
+ScriptSupportEvent:registerEvent("Actor.Die", OnActorDie)
+ScriptSupportEvent:registerEvent("Game.RunTime", Update)
+ScriptSupportEvent:registerEvent("Player.ClickBlock", OnPlayerClickBlock)
+ScriptSupportEvent:registerEvent("Player.ClickActor", OnPlayerClickActor)
+ScriptSupportEvent:registerEvent("Player.DamageActor", OnPlayerDamageActor)
+ScriptSupportEvent:registerEvent("Player.AttackHit", OnPlayerAttackHit)
+ScriptSupportEvent:registerEvent("Player.AreaIn", OnPlayerAreaIn)
+ScriptSupportEvent:registerEvent("Player.AreaOut", OnPlayerAreaOut)
+ScriptSupportEvent:registerEvent("Player.Die", OnPlayerDie)
+ScriptSupportEvent:registerEvent("Actor.BeHurt", OnActorBeHurt)
+ScriptSupportEvent:registerEvent("Player.DefeatActor", OnPlayerDefeatActor)
+ScriptSupportEvent:registerEvent("Player.NewInputContent", OnPlayerNewInputContent)
+ScriptSupportEvent:registerEvent("Actor.Collide", OnActorCollide)
+ScriptSupportEvent:registerEvent("Player.Revive", OnPlayerRevive)
+ScriptSupportEvent:registerEvent("Actor.Beat", OnActorBeat)
+ScriptSupportEvent:registerEvent("Actor.AttackHit", OnActorAttackHit)
+ScriptSupportEvent:registerEvent("Item.Create", OnItemCreate)
+ScriptSupportEvent:registerEvent("Player.UseItem", OnPlayerUseItem)
+ScriptSupportEvent:registerEvent("Player.SelectShortcut", OnPlayerSelectShortcut)
+ScriptSupportEvent:registerEvent("Player.DismountActor", OnPlayerDismountActor)
+ScriptSupportEvent:registerEvent("Player.ChangeAttr", OnPlayerChangeAttr)
+ScriptSupportEvent:registerEvent("Player.MountActor", OnPlayerMountActor)
+ScriptSupportEvent:registerEvent("Actor.Projectile.Hit", OnActorProjectileHit)
+ScriptSupportEvent:registerEvent("Player.InputKeyDown", OnInputKeyDown)
+ScriptSupportEvent:registerEvent("Developer.BuyItem", OnPlayerBuyItem)

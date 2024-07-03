@@ -1,0 +1,114 @@
+local Map = Component.Player.Map
+
+
+function Map:ctor(player)
+    self.player = player
+end
+
+function Map:Init(data)
+    self:InitData(data)
+end
+
+function Map:InitData(data)
+    data = data or {}
+    self.data = data
+    self.unlockMapId = data.unlockMapId or 2    -- 野外地图1
+    self.killBossMapId = data.killBossMapId or 1
+end
+
+function Map:GetSaveData()
+    local data = {}
+    data.unlockMapId = self.unlockMapId
+    data.killBossMapId = self.killBossMapId
+    return data
+end
+
+function Map:GetUnlockMapId()
+    return self.unlockMapId
+end
+
+function Map:SetUnlockMapId(id)
+    self.unlockMapId = id
+    self.player.Reddot:CheckPromotionLevelReddot()
+end
+
+function Map:GetKillBossMapId()
+    return self.killBossMapId
+end
+
+function Map:SetKillBossMapId(id)
+    self.killBossMapId = id
+end
+
+function Map:TPToMap(map_id, quick)
+    local curMapConfig = G_ConfigManager.MapConfig:GetMapConfigById(self.cur_map)
+    if curMapConfig and quick and not curMapConfig.quickBack then
+        self.player:SendTips(TIPS_CONST.LockQuickMovementMapTipsStr)
+        return
+    end
+    local mapConfig = G_ConfigManager.MapConfig:GetMapConfigById(map_id)
+    if not mapConfig then
+        return
+    end
+    local cur_map = self:GetCurMap()
+    if cur_map ~= map_id or map_id == CONST.MainCityMapId then
+        -- self.player.EventManager:Trigger(PlayerEventEnum.tp_to_map, map_id, 1)
+        if mapConfig.respawnId then
+            local respawnConfig = G_ConfigManager.MapConfig:GetRespawnConfigById(mapConfig.respawnId)
+            if respawnConfig then
+                local size = respawnConfig.size
+                local offset = Vector3.New(math.random(-size.x, size.x), 1, math.random(-size.z, size.z))
+                local target_pos = offset + respawnConfig.pos
+                self.player:SetPos(target_pos)
+            end
+        end
+        self:SetCurMap(map_id)
+        if cur_map then
+            G_MapManager:PlayerLeaveMap(cur_map, self.player:GetPlayerId())
+        end
+        G_MapManager:PlayerEnterMap(map_id, self.player:GetPlayerId())
+        -- self.player.GuideLine:RefreshGuideLine()
+        if map_id == CONST.MainCityMapId then
+            self.player:FillHp()
+        end
+    end
+    return true
+end
+
+function Map:TPToMapPos(map_id, pos)
+    local cur_map = self:GetCurMap()
+    if map_id ~= cur_map then
+        local succ = self:TPToMap(map_id, true)
+        if not succ then
+            return
+        end
+    end
+    self.player:SetPos(pos)
+end
+
+function Map:PlayerRevive(map_id)
+    local mapConfig = G_ConfigManager.MapConfig:GetMapConfigById(map_id)
+    if not mapConfig then
+        return
+    end
+    if mapConfig.respawnId then
+        local respawnConfig = G_ConfigManager.MapConfig:GetRespawnConfigById(mapConfig.respawnId)
+        if respawnConfig then
+            local size = respawnConfig.size
+            local offset = Vector3.New(math.random(-size.x, size.x), 1, math.random(-size.z, size.z))
+            local target_pos = offset + respawnConfig.pos
+            self.player:SetPos(target_pos)
+        end
+    end
+    -- self.player.GuideLine:RefreshGuideLine()
+end
+
+function Map:GetCurMap()
+    return self.cur_map
+end
+
+function Map:SetCurMap(id)
+    self.cur_map = id
+    -- self:RefreshMianTask()
+    self.player.AFKManager:DoneAFK()
+end

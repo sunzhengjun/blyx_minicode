@@ -1,0 +1,364 @@
+PLAYER_ATTR_TYPE = {
+    maxHp = 1,  -- 最大生命值
+    atk = 2,    -- 攻击力
+    def = 3,    -- 防御
+    crit = 4,   -- 暴击率
+    critDmg = 5,    -- 暴击伤害
+    hit = 6,    -- 命中率
+    elude = 7,   -- 躲闪率
+    critDmgDef = 8, -- 抗爆伤
+    atkSpd = 9, -- 攻速
+    hpRecovery = 10,    -- 生命回复
+    strength = 11,  -- 力量
+    agility = 12,   -- 敏捷
+    stamina = 13, -- 耐力
+    speed = 14, -- 移速
+    physical = 15,  -- 体力
+    moisture = 16,  -- 水分
+    fitness = 17, -- 体能
+    freeWeight = 18,    -- 负重
+    smell = 19, -- 嗅觉
+}
+
+
+
+SystemLogEnum = {
+    None = 0,
+    day_first_login = 1,  -- 每日首次登录
+    login = 2,  -- 登录
+    new_player = 3, -- 新玩家首次进入游戏
+    online_0  = 4,   -- 小于0分钟
+    online_5  = 5,   -- 小于5分钟
+    online_10  = 6,   -- 小于10分钟
+    online_15  = 7,   -- 小于15分钟
+    online_20  = 8,   -- 小于20分钟
+    online_25  = 9,   -- 小于25分钟
+    online_30 = 10,   -- 小于30分钟
+    online_30_plus = 11,   -- 大于30分钟
+
+    rookie_online_0  = 12,   -- 新玩家小于0分钟
+    rookie_online_5  = 13,   -- 新玩家小于5分钟
+    rookie_online_10  = 14,   -- 新玩家小于10分钟
+    rookie_online_15  = 15,   -- 新玩家小于15分钟
+    rookie_online_20  = 16,   -- 新玩家小于20分钟
+    rookie_online_25  = 17,   -- 新玩家小于25分钟
+    rookie_online_30 = 18,   -- 新玩家小于30分钟
+    rookie_online_30_plus = 19,   -- 新玩家大于30分钟
+    
+    logout = 20,  -- 登出
+    total_time = 21,  -- 总时长
+    rookie_total_time = 22,  -- 新人总时长
+
+    player_invite = 23,  -- 玩家邀请新玩家
+    rookie_player_invite = 24,  -- 新玩家邀请新玩家
+    new_player_login = 25,  -- 新玩家当天登陆
+
+    rookie_first_stage_1  = 26,   -- 新玩家首次离线段位
+    rookie_first_stage_2  = 27,   -- 新玩家首次离线段位
+    rookie_first_stage_3  = 28,   -- 新玩家首次离线段位
+    rookie_first_stage_4  = 29,   -- 新玩家首次离线段位
+    rookie_first_stage_5  = 30,   -- 新玩家首次离线段位
+    rookie_first_stage_6  = 31,   -- 新玩家首次离线段位
+    rookie_first_stage_7  = 32,   -- 新玩家首次离线段位
+    rookie_first_stage_8  = 33,   -- 新玩家首次离线段位
+    rookie_first_stage_9  = 34,   -- 新玩家首次离线段位
+    rookie_first_stage_10 = 35,   -- 新玩家首次离线段位
+    rookie_first_stage_11 = 36,   -- 新玩家首次离线段位
+    rookie_first_stage_12 = 37,   -- 新玩家首次离线段位
+    rookie_first_stage_13 = 38,   -- 新玩家首次离线段位
+    rookie_first_stage_14 = 39,   -- 新玩家首次离线段位
+    rookie_first_stage_15 = 40,   -- 新玩家首次离线段位
+    rookie_first_stage_16 = 41,   -- 新玩家首次离线段位
+    rookie_first_stage_17 = 42,   -- 新玩家首次离线段位
+    rookie_first_stage_18 = 43,   -- 新玩家首次离线段位
+    rookie_first_stage_19 = 44,   -- 新玩家首次离线段位
+
+    first_online_stage_1  = 45,   -- 非新玩家每日首次上线段位
+    first_online_stage_2  = 46,   -- 非新玩家每日首次上线段位
+    first_online_stage_3  = 47,   -- 非新玩家每日首次上线段位
+    first_online_stage_4  = 48,   -- 非新玩家每日首次上线段位
+    first_online_stage_5  = 49,   -- 非新玩家每日首次上线段位
+    first_online_stage_6  = 50,   -- 非新玩家每日首次上线段位
+    first_online_stage_7  = 51,   -- 非新玩家每日首次上线段位
+    first_online_stage_8  = 52,   -- 非新玩家每日首次上线段位
+    first_online_stage_9  = 53,   -- 非新玩家每日首次上线段位
+    first_online_stage_10 = 54,   -- 非新玩家每日首次上线段位
+    first_online_stage_11 = 55,   -- 非新玩家每日首次上线段位
+    first_online_stage_12 = 56,   -- 非新玩家每日首次上线段位
+    first_online_stage_13 = 57,   -- 非新玩家每日首次上线段位
+    first_online_stage_14 = 58,   -- 非新玩家每日首次上线段位
+    first_online_stage_15 = 59,   -- 非新玩家每日首次上线段位
+    first_online_stage_16 = 60,   -- 非新玩家每日首次上线段位
+    first_online_stage_17 = 61,   -- 非新玩家每日首次上线段位
+    first_online_stage_18 = 62,   -- 非新玩家每日首次上线段位
+    first_online_stage_19 = 63,   -- 非新玩家每日首次上线段位
+
+    offline_stage_1  = 64,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_2  = 65,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_3  = 66,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_4  = 67,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_5  = 68,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_6  = 69,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_7  = 70,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_8  = 71,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_9  = 72,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_10 = 73,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_11 = 74,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_12 = 75,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_13 = 76,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_14 = 77,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_15 = 78,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_16 = 79,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_17 = 80,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_18 = 81,   -- 新玩家非首次离线和老玩家离线段位
+    offline_stage_19 = 82,   -- 新玩家非首次离线和老玩家离线段位
+
+    player_enter = 83, -- 触发玩家进入事件
+}
+
+VarLibEnum = {
+    bool = 5,
+    string = 4
+}
+
+ValueGroupEnum = {
+    string = 18
+}
+
+ItemType = {
+    
+}
+
+PlayerEventEnum = {
+    
+}
+
+NpcType = {
+    dungeon = 1,
+    ui = 2,
+    item_recovery = 3,
+}
+
+PortalType = {
+    openUI = 1,
+    toOther = 2,
+}
+
+PlayerActionType = {
+    move = 1,
+    attack = 32,
+    be_attacked = 64,
+}
+
+ActorActionType = {
+    move = 1,
+    attack = 32,
+    be_attacked = 64,
+}
+
+RespawnType = {
+    boss = 1,
+    common = 2,
+}
+
+DailyTaskType = {
+    online = 1,
+    any_kill = 2,
+}
+
+DailyTaskState = {
+    normal = 0,
+    progressing = 1,
+    done = 2,
+}
+
+GuideLineType = {
+    task = 1,
+    treasure = 2,
+}
+
+RankType = {
+    power = 1,  -- 战力
+}
+
+
+LimitBuyType = {
+    none = 0,   -- 不限购
+    day = 1,
+    week = 2,
+    month = 3,
+}
+
+ClanCurrencyType = {
+    fame = 1,    -- 名望值
+}
+
+ClanEventType = {
+    player_join = 1,   -- 玩家加入
+    player_leave = 2,    -- 玩家退出
+    job_change = 3,     -- 职位改变
+    currency_change = 4,    -- 宗门货币变更
+    build_lv_change = 5,   -- 建筑等级变更
+    week_refresh = 6,   -- 周刷新
+    activity_change = 7,   -- 活跃度变更
+    clan_lv_change = 8,   -- 宗门等级变更
+    clan_create = 9,   -- 宗门创建
+    name_change = 10,   -- 宗门名字修改
+    desc_change = 11,   -- 宗门宣言修改
+    campaign_times_change = 12,   -- 宗门活动次数
+    day_refresh = 13,   -- 日刷新
+}
+
+ClanJobType = {
+    owner = 1,  -- 帮主
+    deputy = 2, -- 副帮主
+    members = 3, -- 帮众
+}
+
+PlayerStateType = {
+    loading = 1,
+    running = 2,
+    leaving = 3,
+}
+
+CreateAttrType = {
+    max_hp = 1,
+    cur_hp = 2,
+    speed = 10,
+    atk = 17,
+    remote_atk = 18,
+    def = 19,
+    model_size = 21,
+}
+
+PlayerAttrType = {
+    max_hp = 1,
+    cur_hp = 2,
+}
+
+StageUpConditionType = {
+    lv = 1,
+    item = 2,
+}
+
+BoolEnum = {
+    FALSE = 0,
+    TRUE = 1,
+}
+
+UIAnimEnum = {
+    enlarge_show = 10002, -- 放大显示
+    reduce_show = 10003, -- 缩小显示
+    enlarge_hide = 20002, -- 放大隐藏
+    reduce_hide = 20003, -- 缩小隐藏
+    heart_beat = 30003, -- 心跳
+    fade_out = 20001, -- 渐隐
+}
+
+UIAnimStateEnum = {
+    loop = 1,
+    once = 2,
+}
+
+ActEnum = {
+    attack = 16,
+    sit_down = 14,
+    leisure = 19
+}
+
+BackpackType = {
+    -- 1快捷栏 2储存栏 3装备栏
+    fast_slot = 1,
+    bag = 2,
+}
+
+ErrorCode1 = {
+    succ = 0
+}
+
+HurtType = {    -- 伤害类型
+    melee = 0, -- 近战
+    remote = 1, -- 远程
+}
+
+MoveAuthType = {
+    use_ring = 1,
+}
+
+ActorType = {
+    player = 1,
+    creature = 2
+}
+
+EffectId = {
+    explosion_1 = 1007, -- 爆炸
+    explosion_2 = 1009, -- 爆炸
+    explosion_3 = 1021, -- 爆炸
+    explosion_19 = 1219, -- 爆炸
+    explosion_29 = 1350, -- 爆炸
+    explosion_33 = 1619, -- 爆炸
+    explosion_34 = 1620, -- 爆炸
+    explosion_35 = 1700, -- 爆炸
+    explosion_38 = 3033, -- 爆炸
+    explosion_41 = 3044, -- 爆炸
+
+    light_10 = 1185, -- 光效
+    light_27 = 1238, -- 光效
+    light_38 = 1299, -- 光效
+    light_44 = 1321, -- 光效
+    light_53 = 1356, -- 光效
+    light_54 = 1358, -- 光效
+    light_68 = 1566, -- 光效
+    light_72 = 1627, -- 光效
+    light_76 = 1701, -- 光效
+    light_81 = 3064, -- 光效
+    light_82 = 3065, -- 光效
+    light_88 = 3073, -- 光效
+    light_89 = 3074, -- 光效
+    light_93 = 3078, -- 光效
+    light_94 = 3079, -- 光效
+    light_95 = 3080, -- 光效
+
+    tips_5 = 1178,
+    tips_48 = 1593,
+    tips_51 = 1596,
+    tips_52 = 1597,
+    tips_53 = 1598,
+    tips_54 = 1599,
+    tips_58 = 1603,
+    tips_65 = 1610, -- 提示
+    tips_68 = 1622,
+    tips_70 = 1738, -- 提示
+
+    particles_5 = 1020,   -- 粒子
+    particles_6 = 1022,   -- 粒子
+    particles_14 = 1210,   -- 粒子
+    particles_17 = 1228,   -- 粒子
+    particles_18 = 1237,   -- 粒子
+    particles_32 = 1417,   -- 粒子
+    particles_36 = 1438,   -- 粒子
+    particles_42 = 1524,   -- 粒子
+    particles_44 = 1621,   -- 粒子
+
+    smoke_7 = 1149,  -- 烟雾
+
+    fire_11 = 1035, -- 火焰
+    fire_13 = 1039, -- 火焰
+    fire_15 = 1042, -- 火焰
+    fire_16 = 1043, -- 火焰
+    fire_33 = 1395, -- 火焰
+    fire_37 = 1653, -- 火焰
+
+    environment_10 = 1284,  -- 环境
+    environment_11 = 1296,  -- 环境
+}
+
+Audio_Id = {
+    behavior_54 = 10618,    -- 行为
+    behavior_100 = 10795,
+    skill_10 = 10087,       -- 技能
+    skill_26 = 10380,
+    skill_40 = 11090,
+
+    environment_31 = 11085,  -- 环境
+}

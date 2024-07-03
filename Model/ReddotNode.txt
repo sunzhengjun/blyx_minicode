@@ -1,0 +1,100 @@
+local ReddotNode = Component.Model.ReddotNode
+
+function ReddotNode:ctor(parent, children_info, playerId)
+	self.parent = parent
+	self.children = {}
+	self.num = 0
+	self.the_end = false
+	self.children_info = children_info
+	self.children_num = 0
+	self.reddotInfo = nil
+	self.callback = {}
+    self.playerId = playerId
+end
+
+function ReddotNode:Init()
+	for node_name, value in pairs(self.children_info) do
+		local reddot_node = ReddotNode.New(self, value.children, self.playerId)
+		reddot_node:Init()
+		self.children[node_name] = reddot_node
+		self.children_num = self.children_num + 1
+	end
+	self.the_end = self.children_num == 0
+end
+
+function ReddotNode:SetReddot(reddotInfo)
+	self.reddotInfo = reddotInfo
+	self:RefreshState()
+end
+
+function ReddotNode:AddNum(nodes, num)
+	local real_num = num
+	if #nodes > 0 then
+		local next_node_name = table.remove(nodes, 1)
+		local node = self.children[next_node_name]
+		if not node then
+			return 0
+		end
+		real_num = node:AddNum(nodes, num)
+	end
+
+	local new_num = self.num + real_num
+
+	if self.the_end then    -- 末尾节点红点数量只有1跟0
+		if new_num > 1 then
+			real_num = 0
+			new_num = self.num
+		end
+		if new_num < 0 then
+			real_num = 0
+			new_num = self.num
+		end
+	end
+
+	self.num = new_num
+	self:RefreshState()
+	for i, v in ipairs(self.callback) do
+		local res, ret = pcall(v, self.num)
+		if not res then
+			warn(ret)
+		end
+	end
+	return real_num
+end
+
+-- 注册节点红点变更事件
+function ReddotNode:RegisterCallback(func)
+	table.insert(self.callback, func)
+	local res, ret = pcall(func, self.num)
+	if not res then
+		error(ret, 2)
+	end
+end
+
+-- 清空节点红点变更事件
+function ReddotNode:ClearCallback()
+	self.callback = {}
+end
+
+function ReddotNode:RefreshState()
+	if self.reddotInfo then
+        MINI_SetElementVisible(self.playerId, self.reddotInfo.uiid, self.reddotInfo.elementId, self.num > 0)
+	end
+end
+
+function ReddotNode:GetNode(noed_list)
+	if #noed_list > 0 then
+		local next_node_name = table.remove(noed_list, 1)
+		local node = self.children[next_node_name]
+		if not node then
+			return
+		end
+		return node:GetNode(noed_list)
+	end
+
+	return self
+end
+
+function ReddotNode:GetNum()
+	return self.num
+end

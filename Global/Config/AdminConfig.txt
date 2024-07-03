@@ -1,0 +1,21 @@
+local white_players = {--白名单 室长 米粒 13 兔子 龙，凉拌金桔 丁真
+    [1238186092] = 1,
+    [1724070151] = 1,
+    [1583952832] = 1,
+    [1445471098] = 1,
+    [1236330631] = 1,
+    [1776870503] = 1,
+    [1797161526] = 1,
+}
+
+local ownerId = 1445471098
+
+local AdminConfig = Component.Config.AdminConfig
+
+function AdminConfig:GetPlayerIsWhite(player_id)
+    return white_players[player_id] == 1
+end
+
+function AdminConfig:GetIsOwner(player_id)
+    return player_id == ownerId
+end

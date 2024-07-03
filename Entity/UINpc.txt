@@ -1,0 +1,20 @@
+local UINpc = Component.Entity.UINpc
+
+function UINpc:ctor(id, npc_config)
+    self.npc_config = npc_config
+    self.panel_type = self.npc_config.panel_type
+end
+
+function UINpc:RefreshLabel()
+    -- local str = string.format(self.npc_config.title, self.npc_config.name)
+    -- local text_size = 20
+    -- self:SetTitleLabel(str, text_size, self.npc_config.height)
+end
+
+function UINpc:OnPlayerClick(player_id)
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    player.UIManager:OpenUI(self.panel_type, {npc_id = self.npc_config.id})
+end

@@ -1,0 +1,29 @@
+local AreaManager = Component.Manager.AreaManager
+
+function AreaManager:ctor()
+    self.area_map = {}
+end
+
+function AreaManager:Init()
+    
+end
+
+function AreaManager:AddArea(id, area)
+    self.area_map[id] = area
+end
+
+function AreaManager:EnterArea(player_id, area_id)
+    local area = self.area_map[area_id]
+    if not area then
+        return
+    end
+    area:PlayerEnter(player_id)
+end
+
+function AreaManager:OutArea(player_id, area_id)
+    local area = self.area_map[area_id]
+    if not area then
+        return
+    end
+    area:PlayerOut(player_id)
+end

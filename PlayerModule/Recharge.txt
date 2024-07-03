@@ -1,0 +1,116 @@
+local Recharge = Component.Player.Recharge
+
+function Recharge:ctor()
+    
+end
+
+function Recharge:Init(data)
+    self.data = data or {}
+    self:InitData()
+end
+
+function Recharge:InitData()
+    self.total = self.data.total or 0
+    self.rechargeReveiceMap = {}
+    for i, v in ipairs(self.data.rechargeReveice or {}) do
+        self.rechargeReveiceMap[v.id] = v.state
+    end 
+    
+    self.buy_times = {}
+    for index, value in ipairs(self.data.buy_times or {}) do
+        self.buy_times[value.id] = value.num
+    end
+end
+
+function Recharge:OnLoadDone()
+    -- self:CheckRechargeReddot()
+end
+
+function Recharge:GetSaveData()
+    local data = self.data
+    data.total = self.total
+    data.rechargeReveice = {}
+    for k, v in pairs(self.rechargeReveiceMap) do
+        table.insert(data.rechargeReveice, {id = k, state = v})
+    end
+    local buy_times = {}
+    for key, value in pairs(self.buy_times) do
+        table.insert(buy_times, {id = key, num = value})
+    end
+    data.buy_times = buy_times
+    return data
+end
+
+function Recharge:GetTotalRecharge()
+    return self.total or 0
+end
+
+function Recharge:AddTotalRecharge(num)
+    local bf = self:GetTotalRecharge()
+    local new = bf + num
+    self.total = new
+    -- self:CheckRechargeReddot()
+end
+
+function Recharge:GetTotalRechargeReveice(idx)
+    return self.rechargeReveiceMap[idx]
+end
+
+function Recharge:SetTotalRechargeReveice(idx, state)
+    self.rechargeReveiceMap[idx] = state
+    -- self:CheckRechargeReddot()
+end
+
+function Recharge:GetItemBuyTimes(id)
+    return self.buy_times[id] or 0
+end
+
+function Recharge:AddItemBuyTimes(id, times)
+    local bf = self:GetItemBuyTimes(id)
+    local new = bf + times
+    self.buy_times[id] = new
+end
+
+function Recharge:OnBuyDevItem(dev_item_id)
+    local dev_config = G_ConfigManager.DevItemConfig:GetDevItemConfigById(dev_item_id)
+    if not dev_config then
+        return
+    end
+    self:AddTotalRecharge(dev_config.sell)
+    self:AddItemBuyTimes(dev_item_id, 1)
+end
+
+function Recharge:GetRechargeTypeDoneState(type)
+    local recharge_list = G_ConfigManager.WelfConfig:GetRechargeListByType(type)
+    if not recharge_list then
+        return false
+    end
+    local done = true
+    for index, value in ipairs(recharge_list) do
+        local receive = self:GetTotalRechargeReveice(value.step)
+        if not receive then
+            done = false
+        end
+    end
+    return done
+end
+
+function Recharge:CheckRechargeReddot()
+    local nums = {}
+    local total = self:GetTotalRecharge()
+    local recharge_config = G_ConfigManager.WelfConfig:GetRechargeConfig()
+    for index, value in ipairs(recharge_config or {}) do
+        nums[value.step] = -1
+        if total >= value.recharge then
+            local state = self:GetTotalRechargeReveice(value.step)
+            if not state then
+                nums[value.step] = 1
+            end
+        end
+    end
+    
+    for key, value in pairs(nums) do
+        local path = string.format(REDDOT_COSNT.WelfRechargeReveice, key)
+        self.player.Reddot:ChangeReddotNum(path, value)
+    end
+end

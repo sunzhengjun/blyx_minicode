@@ -1,0 +1,60 @@
+local Block1 = Component.Base.Block1
+
+function Block1:ctor(pos)
+    self.pos = pos
+    self.exist = false
+end
+
+function Block1:Init()
+    
+end
+
+function Block1:GetPos()
+    return self.pos
+end
+
+function Block1:GetExist()
+    return self.exist
+end
+
+function Block1:SetExist(state)
+    self.exist = state
+    
+    self:RefreshLabel()
+end
+
+function Block1:DestroyBlock()
+    G_GameManager:DestroyBlock(self.pos)
+end
+
+function Block1:RefreshLabel()
+    
+end
+
+function Block1:SetTitleLabel(context, text_size)
+    local point = self.pos
+    if self.graphid then
+        Graphics:removeGraphicsByPos(point.x, point.y + 1, point.z, 1, 1)
+        World:stopEffectOnPosition(point.x, point.y, point.z, 1025)
+        self.graphid = nil
+    end
+    if not self:GetExist() then
+        return
+    end
+    if not context then
+        return
+    end
+    local graphicsInfo=Graphics:makeGraphicsText(context, text_size, 100, 1)
+    local result,graphid=Graphics:createGraphicsTxtByPos(point.x, point.y + 1, point.z, graphicsInfo, 0, 0)
+    self.graphid = graphid
+    
+    World:playParticalEffect(point.x, point.y, point.z,1025,1)
+end
+
+function Block1:OnPlayerClick(player)
+    
+end
+
+function Block1:Update(second)
+    
+end

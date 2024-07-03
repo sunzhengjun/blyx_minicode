@@ -1,0 +1,16 @@
+local ConfigManager = Component.Manager.ConfigManager
+
+function ConfigManager:ctor()
+    
+end
+
+function ConfigManager:Init()
+    for key, value in pairs(Component.Config) do
+        local config = value.New(self)
+        self[key] = config
+    end
+    
+    for key, value in pairs(Component.Config) do
+        self[key]:Init()
+    end
+end

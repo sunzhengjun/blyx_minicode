@@ -1,0 +1,157 @@
+local Map = Component.Base.Map
+
+-- local SafeZone = Component.Model.SafeZone
+-- local HerbsPortal = Component.Model.HerbsPortal
+
+local refresh_interval = 5
+
+function Map:ctor(config)
+    self.config = config
+    self.player_list = {}
+    self.npc_list = {}
+    self.safe_area = {}
+    self.entityList = {}
+end
+
+function Map:Init()
+    -- for index, value in ipairs(self.config.safe_zone or {}) do
+    --     local area_id = G_GameManager:CreateAreaOfRange(value.begin_pos, value.end_pos)
+    --     if area_id then
+    --         local safe_zone = SafeZone.New(area_id, value)
+    --         safe_zone:Init()
+    --         G_AreaManager:AddArea(area_id, safe_zone)
+    --         self.safe_area[value.id] = safe_zone
+    --     end
+    -- end
+
+    -- for index, value in ipairs(self.config.portal or {}) do
+    --     local area_id = G_GameManager:CreateAreaOfRange(value.begin_pos, value.end_pos)
+    --     if area_id then
+    --         local portal
+    --         if value.portal_type == PortalType.herbs_portal then
+    --             portal = HerbsPortal.New(area_id, value.id, value)
+    --         else
+    --             portal = Portal.New(area_id, value.id, value)
+    --         end
+    --         portal:Init()
+    --         G_AreaManager:AddArea(area_id, portal)
+    --         self.portal_list[value.id] = portal
+    --     end
+    -- end
+end
+
+function Map:AddNpc(npc)
+    table.insert(self.npc_list, npc)
+end
+
+function Map:RefreshNpc()
+    local time = os.time()
+    self.next_check_time = time + refresh_interval
+    for index, value in ipairs(self.npc_list) do
+        value:RefreshEntity()
+    end
+end
+
+function Map:PlayerEnter(player_id)
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    table.insert(self.player_list, player_id)
+    self:RefreshNpc()
+    self:OnPlayerEnter(player_id)
+end
+
+function Map:PlayerLeave(player_id)
+    for i = #self.player_list, 1, -1 do
+        if self.player_list[i] == player_id then
+            table.remove(self.player_list, i)
+            break
+        end
+    end
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    self:OnPlayerLeave(player_id)
+end
+
+function Map:Update(second)
+    
+end
+
+function Map:GetPlayerNum()
+    return #self.player_list
+end
+
+function Map:GetPlayerList()
+    return self.player_list
+end
+
+function Map:GetMainTaskShowState()
+    if self.config.id == CONST.DungeonMapId then
+        return false
+    end
+    return true
+end
+
+function Map:GetCanNotify()
+    return true
+end
+
+function Map:MapEventNotify(event, ...)
+    local notify = self:GetCanNotify()
+    if not notify then
+        return
+    end
+    for index, value in ipairs(self.player_list) do
+        local player = G_PlayerManager:GetPlayer(value)
+        if player then
+            player.EventManager:Trigger(event, ...)
+        end
+    end
+end
+
+function Map:MapNotify(str)
+    for index, value in ipairs(self.player_list) do
+        Player:notifyGameInfo2Self(value, str)
+        Chat:sendSystemMsg(str, value)
+    end
+end
+
+function Map:OnPlayerEnter(player_id)
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    -- player:SetActionAttrState(PlayerActionType.attack, self.config.pvp)
+    -- player:SetActionAttrState(PlayerActionType.be_attacked, self.config.pvp)
+    -- if self.config.id ~= CONST.MainCityMapId then
+    -- end
+    -- player.Ride:CancelRide()
+end
+
+function Map:OnPlayerLeave(player_id)
+    
+end
+
+function Map:OnPlayerDie()
+    
+end
+
+function Map:EntityEnterMap(entityId)
+    table.insert(self.entityList, entityId)
+end
+
+function Map:EntityLeaveMap(entityId)
+    for i = #self.entityList, 1, -1 do
+        if self.entityList[i] == entityId then
+            table.remove(self.entityList, i)
+            break
+        end
+    end
+end
+
+function Map:GetEntityList()
+    return self.entityList
+end

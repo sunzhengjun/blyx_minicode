@@ -1,0 +1,729 @@
+--数字转汉字
+
+local numeric_units = {
+    {min = 10^16, name = "京"},
+    {min = 10^12, name = "兆"},
+    {min = 10^8, name = "亿"},
+    {min = 10^4, name = "万"},
+}
+
+function NumToString(num, decimal)
+    decimal = decimal or 2
+    local tempStr = num
+    for index, value in ipairs(numeric_units) do
+        if num >= value.min then
+            tempStr = string.format("%.".. decimal .. "f", num / value.min)..value.name
+            break
+        end
+    end
+    return tempStr
+end
+
+function GetUnsignedNumber(num)
+    return tonumber(num) + (tonumber(num) < 0 and 2^64 or 0)
+end
+
+function DeepCopy(targetTab)
+    if targetTab == nil then
+        return nil
+    end
+    if type(targetTab) ~= "table" then
+        return targetTab
+    end
+    local new_tab = {}
+    local mt = getmetatable(targetTab)
+    if mt ~= nil then
+        setmetatable(new_tab, mt)
+    end
+    for i, v in pairs(targetTab) do
+        if type(v) == "table" then
+            new_tab[i] = DeepCopy(v)
+        else
+            new_tab[i] = v
+        end
+    end
+    return new_tab
+end
+
+function GetStrWordNum(str)
+    if not str or type(str) ~= "string" or #str <= 0 then
+        return 0
+    end
+    local length = 0  -- 字符的个数
+    local i = 1
+    while true do
+        local curByte = string.byte(str, i)
+        local byteCount = 1
+        if curByte > 239 then
+            byteCount = 4  -- 4字节字符
+        elseif curByte > 223 then
+            byteCount = 3  -- 汉字
+        elseif curByte > 128 then
+            byteCount = 2  -- 双字节字符
+        else
+            byteCount = 1  -- 单字节字符
+        end
+        i = i + byteCount
+        length = length + 1
+        if i > #str then
+            break
+        end
+    end
+    return length
+end
+
+function GetRingAgeStr(age)
+    local age_str = age
+    if age_str > 10000 then
+        age_str = (age / 10000) .. "万"
+    end
+    return age_str
+end
+
+
+function ChangeJsonNumKey(tab)
+    local temp = {}
+    for k, value in pairs(tab) do
+        local key = tonumber(k) or k
+        if type(value) == "table" then
+            temp[key] = ChangeJsonNumKey(value)
+        else
+            temp[key] = value
+        end
+    end
+    return temp
+end
+
+function CalcAngle(v1, v2)
+    -- local x = math.abs(v1.x - v2.x)
+    -- local y = math.abs(v1.y - v2.y)
+    -- local z = math.sqrt(x * x + y * y)
+    -- local angle = math.asin(y/z)/math.pi * 180
+    local angle = math.atan2((v1.y - v2.y), (v1.x - v2.x)) * 180 / math.pi
+    return (angle + 360) % 360
+end
+
+-- num: 天数 获取今天0点+num天的时间戳
+function GetTodayTimeStamp(num)
+    local cDateCurrectTime = os.date("*t")
+    local cDateTodayTime = os.time({year=cDateCurrectTime.year, month=cDateCurrectTime.month, day=cDateCurrectTime.day, hour=0,min=0,sec=0})
+    return cDateTodayTime + ((num or 0) * 86400)
+end
+function GetZeroTimeStamp(time)
+    local cDateCurrectTime = os.date("*t", time)
+    local cDateTodayTime = os.time({year=cDateCurrectTime.year, month=cDateCurrectTime.month, day=cDateCurrectTime.day, hour=0,min=0,sec=0})
+    return cDateTodayTime
+end
+
+function GetDateNum(timeNow, timeNext)
+    local ret = 0
+    if timeNow and timeNext then
+        local now = os.date("*t", timeNow)
+        local next = os.date("*t", timeNext)
+
+        if now and next then
+            local num1 = os.time({ year = now.year, month=now.month, day=now.day })
+            local num2 = os.time({ year = next.year, month=next.month, day=next.day })
+            if num1 and num2 then
+                ret =  math.ceil(math.abs(num1 - num2) / (3600*24))
+            end
+        end
+    end
+    return ret
+end
+
+function GetMondayTime(time)
+    if not time or time <= 0 then
+        return 0
+    end
+    local currentWeekday = os.date("%w", time)
+    local mondayTime = time - (currentWeekday - 1) * TIME_CONST.day
+    local zero = GetZeroTimeStamp(mondayTime)
+    return zero
+end
+
+function GetCurWeekAnyDayTime(day)
+    local time = os.time()
+    local monday = GetMondayTime(time)
+    local time2 = monday + (day - 1) * TIME_CONST.day
+    return time2
+end
+
+function GetCurWeekDay()
+    local time = os.time()
+    local currentWeekday = os.date("%w", time)
+    if tonumber(currentWeekday) == 0 then
+        return 7
+    end
+    return currentWeekday
+end
+
+function GetFirstDayOfMonth(time)
+    local currentMonth = os.date("%m", time)
+    local currentYear = os.date("%Y", time)
+    local firstDayOfMonth = os.time({year = currentYear, month = currentMonth, day = 1})
+    local zero = GetZeroTimeStamp(firstDayOfMonth)
+    return zero
+end
+
+function FormatNumber(Int)
+	return string.format("%02i", Int)
+end
+
+function ConvertSeconds(Seconds)
+	local Minutes = (Seconds - Seconds%60)/60
+	Seconds = Seconds - Minutes*60
+	local Hours = (Minutes - Minutes%60)/60
+	Minutes = Minutes - Hours*60
+	local FinalText=FormatNumber(Seconds)
+	FinalText=FormatNumber(Minutes)..":"..FinalText
+	if Hours>0 then
+		FinalText=FormatNumber(Hours)..":"..FinalText
+	end
+	return FinalText
+end
+
+
+function Clamp(v, max, min)
+    if max < min then
+        local t = max
+        max = min
+        min = t
+    end
+    if v > max then
+        return max
+    elseif v < min then
+        return min
+    else
+        return v
+    end
+end
+
+function Lerp(A, B, T)
+    return A + T * (B - A)
+end
+
+--计算距离
+function Distance(a,b)
+    return math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z))     
+end
+
+--获取通用物品配置 1货币 2魂环 3材料 4防具 5武器 6魂骨 7灵兽 8宝石 9 武魂 10 其他 11 神祠道具 12 暗器 13 称号 14礼包 15 活动道具
+function GetCommonItemConfig(itemType, id)
+    if itemType == 1 then
+        return CurrencyConfig[id]
+    elseif itemType == 2 then
+        return RING_CONFIG[id]
+    elseif itemType == 3 then 
+        return MATERIAL_CONFIG[id]
+    elseif itemType == 4 then
+        return GetEqpConfig(id)
+    elseif itemType == 5 then
+        return GetWeaponConfig(id)
+    elseif itemType == 6 then
+        return GetSoulBoneConfig(id)
+    elseif itemType == 7 then
+        return GetSpiritConfigById(id)
+    elseif itemType == 8 then
+        return GetGemConfig(id)
+    elseif itemType == 9 then
+        return weaSoulConfig[id]
+    elseif itemType == 10 then
+        return OtherConfig[id]
+    elseif itemType == 11 then
+        return SHRINE_CONFIG[id]
+    elseif itemType == 12 then
+        local concealed_config = G_ConfigManager.ConcealedConfig:GetConcealedConfigById(id)
+        return concealed_config
+    elseif itemType == 13 then
+        return GetTitleConfig(id)
+    elseif itemType == 14 then
+        return GetGiftPacksConfig(id)
+    elseif itemType == 15 then
+        return GetActivitiesItemConfig(id)
+    else
+        print("类型不存在 .. " .. (itemType or "") .. "--ID : .. " .. (id or ""))
+    end
+end
+
+CloudManager = {
+    get_list = {},
+    set_list = {}
+}
+
+function CloudManager:GetMaxRequestTimes()
+    return 30 + (self:GetPlayerCount() or 0) * 10
+end
+
+function CloudManager:GetPlayerCount()
+    return self.player_count or 0
+end
+
+function CloudManager:SetPlayerCount(count)
+    self.player_count = count or 0
+end
+
+function CloudManager:AddGetTims(type)
+    local time = os.time()
+    table.insert(self.get_list, {time = time, type = type})
+    local last_time = time - 60
+
+    for i = #self.get_list - 1, 1, -1 do
+        local value = self.get_list[i]
+        if value.time < last_time then
+            table.remove(self.get_list, i)
+        end
+    end
+    local max_times = self:GetMaxRequestTimes()
+    if max_times - 3 < #self.get_list then
+        local type_count = {}
+        for index, value in ipairs(self.get_list) do
+            type_count[value.type] = (type_count[value.type] or 0) + 1
+        end
+        local type_str = ""
+        for key, value in pairs(type_count) do
+            type_str = type_str .. key .. ":" .. value .. "-"
+        end
+        Player:StandReportEvent(string.format("Get预警, Time:%s, 当前最大次数%s, 当前分钟请求次数%s, 请求类型次数:%s", time, max_times, #self.get_list, type_str))
+    end
+    -- print(string.format("Get预警, Time:%s, 当前最大次数%s, 当前分钟请求次数%s, 请求类型次数:%s", time, max_times, #self.get_list, type_str))
+end
+
+function CloudManager:GetDataListByKey(type, tab_name, key, func)
+    self:AddGetTims(type)
+    return CloudSever:getDataListByKey(tab_name, key, func)
+end
+
+function CloudManager:SetDataListByKey(type, tab_name, key, func)
+    self:AddSetTims(type)
+    return CloudSever:setDataListByKey(tab_name, key, func)
+end
+
+function CloudManager:AddSetTims(type)
+    local time = os.time()
+    table.insert(self.set_list, {time = time, type = type})
+    local last_time = time - 60
+
+    for i = #self.set_list - 1, 1, -1 do
+        local value = self.set_list[i]
+        if value.time < last_time then
+            table.remove(self.set_list, i)
+        end
+    end
+    local max_times = self:GetMaxRequestTimes()
+    if max_times - 3 < #self.set_list then
+        local type_count = {}
+        for index, value in ipairs(self.set_list) do
+            type_count[value.type] = (type_count[value.type] or 0) + 1
+        end
+        local type_str = ""
+        for key, value in pairs(type_count) do
+            type_str = type_str .. key .. ":" .. value .. "-" 
+        end
+        Player:StandReportEvent(string.format("Set预警, Time:%s, 当前最大次数%s, 当前分钟请求次数%s, 请求类型次数:%s", time, max_times, #self.set_list, type_str))
+    end
+    -- print(string.format("Get预警, Time:%s, 当前最大次数%s, 当前分钟请求次数%s, 请求类型次数:%s", time, max_times, #self.get_list, type_str))
+end
+
+
+
+function CalcDirByYaw(rotation_angle_degrees)
+    -- 初始方向向量（单位向量）  
+    -- 例如：(0, 0, 1) 表示z轴正方向  
+    local initial_dir = {dx = 0, dy = 0, dz = 1}
+      
+    -- 旋转角度（以度数为单位）  
+    -- local rotation_angle_degrees = 45  
+      
+    -- 将角度转换为弧度  
+    local rotation_angle_radians = rotation_angle_degrees * math.pi / 180  
+      
+    -- 旋转矩阵（围绕Y轴）  
+    local rotation_matrix = {  
+        { math.cos(rotation_angle_radians), 0, math.sin(rotation_angle_radians) },  
+        { 0, 1, 0 },  
+        { -math.sin(rotation_angle_radians), 0, math.cos(rotation_angle_radians) }  
+    }  
+      
+    -- 计算新的方向向量  
+    local new_dir = {  
+        dx = initial_dir.dx * rotation_matrix[1][1] + initial_dir.dy * rotation_matrix[1][2] + initial_dir.dz * rotation_matrix[1][3],  
+        dy = initial_dir.dx * rotation_matrix[2][1] + initial_dir.dy * rotation_matrix[2][2] + initial_dir.dz * rotation_matrix[2][3],  
+        dz = initial_dir.dx * rotation_matrix[3][1] + initial_dir.dy * rotation_matrix[3][2] + initial_dir.dz * rotation_matrix[3][3]  
+    }  
+      
+    -- 归一化新的方向向量（确保它是单位向量）  
+    local length = math.sqrt(new_dir.dx * new_dir.dx + new_dir.dy * new_dir.dy + new_dir.dz * new_dir.dz)  
+    new_dir.dx = new_dir.dx / length  
+    new_dir.dy = new_dir.dy / length  
+    new_dir.dz = new_dir.dz / length  
+    return {x = new_dir.dx, y = new_dir.dy, z = new_dir.dz}
+end
+
+
+function GetTabStr(tab , lv)
+    local key = ""
+    local str = ""
+    
+    local function PrintTable(table , level)
+        level = level or 1
+        local indent = ""
+        for i = 1, level do
+            indent = indent.."  "
+        end
+
+        if key ~= "" then
+            str = str .. (indent..key.." ".."=".." ".."{") .. "\n"
+        else
+            str = str .. (indent .. "{") .. "\n"
+        end
+    
+        key = ""
+        for k,v in pairs(table) do
+            if type(v) == "table" then
+                key = k
+                PrintTable(v, level + 1)
+            else
+                local content = string.format("%s%s = %s", indent .. "  ",tostring(k), tostring(v))
+                str = str .. (content) .. "\n"
+            end
+        end
+        str = str .. (indent .. "}") .. "\n"
+    end
+    PrintTable(tab , lv)
+    
+    return str
+end
+
+
+function MINI_SetText(player_id, uiid, element_id, context)
+    context = context or ""
+    if not player_id or not uiid or not element_id or not context then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(context) == "table" then
+        return
+    end
+    Customui:setText(player_id, uiid, element_id, context)
+end
+
+function MINI_SetTextCheckState(player_id, uiid, element_id, context, state, true_color, false_color)
+    context = context or ""
+    if not player_id or not uiid or not element_id or not context then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(context) == "table" then
+        return
+    end
+    Customui:setText(player_id, uiid, element_id, context)
+    
+    if state then
+        MINI_SetColor(player_id, uiid, element_id, true_color or COLOR.White)
+    else
+        MINI_SetColor(player_id, uiid, element_id, false_color or COLOR.Red)
+    end
+end
+
+
+function MINI_SetTexture(player_id, uiid, element_id, tex_id)
+    if not player_id or not uiid or not element_id or not tex_id then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(tex_id) ~= "string" then
+        return
+    end
+
+    Customui:setTexture(player_id, uiid, element_id, tex_id)
+end
+
+function MINI_SetPositon(player_id, uiid, element_id, x, y)
+    if not player_id or not uiid or not element_id or not x  or not y then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(x) ~= "number" then
+        return
+    end
+    if type(y) ~= "number" then
+        return
+    end
+
+    Customui:setPosition(player_id, uiid, element_id, x, y)
+end
+
+function MINI_RotateElement(player_id, uiid, element_id, rotate)
+    if not player_id or not uiid or not element_id or not rotate then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(rotate) ~= "number" then
+        return
+    end
+    
+    Customui:rotateElement(player_id, uiid, element_id, rotate)
+end
+
+function MINI_SetSize(player_id, uiid, element_id, w, h)
+    if not player_id or not uiid or not element_id or not w  or not h then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(w) ~= "number" then
+        return
+    end
+    if type(h) ~= "number" then
+        return
+    end
+
+    Customui:setSize(player_id, uiid, element_id, w, h)
+end
+
+function MINI_SmoothScaleTo(player_id, uiid, element_id, time, w, h)
+    if not player_id or not uiid or not element_id or not w  or not h then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(time) ~= "number" then
+        return
+    end
+    if type(w) ~= "number" then
+        return
+    end
+    if type(h) ~= "number" then
+        return
+    end
+
+    Customui:SmoothScaleTo(player_id, uiid, element_id, time, w, h)
+end
+
+function MINI_SmoothMoveTo(player_id, uiid, element_id, time, x, y)
+    if not player_id or not uiid or not element_id or not x  or not y then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(time) ~= "number" then
+        return
+    end
+    if type(x) ~= "number" then
+        return
+    end
+    if type(y) ~= "number" then
+        return
+    end
+
+    Customui:SmoothMoveTo(player_id, uiid, element_id, time, x, y)
+end
+
+function MINI_SmoothMoveBy(player_id, uiid, element_id, time, x, y)
+    if not player_id or not uiid or not element_id or not x  or not y then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(time) ~= "number" then
+        return
+    end
+    if type(x) ~= "number" then
+        return
+    end
+    if type(y) ~= "number" then
+        return
+    end
+
+    Customui:SmoothMoveBy(player_id, uiid, element_id, time, x, y)
+end
+
+function MINI_StopAnim(player_id, uiid, element_id)
+    if not player_id or not uiid or not element_id then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+
+    Customui:StopAnim(player_id, uiid, element_id)
+end
+
+function MINI_HideElement(player_id, uiid, element_id)
+    if not player_id or not uiid or not element_id then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+
+    Customui:hideElement(player_id, uiid, element_id)
+end
+
+function MINI_ShowElement(player_id, uiid, element_id)
+    if not player_id or not uiid or not element_id then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+
+    Customui:showElement(player_id, uiid, element_id)
+end
+
+-- 这里最后一个参数不传(并且不能显式的传nil)会导致内存爆掉 不知道什么原因
+function MINI_SetElementVisible(player_id, uiid, element_id, visible)
+    if visible then
+        MINI_ShowElement(player_id, uiid, element_id)
+    else
+        MINI_HideElement(player_id, uiid, element_id)
+    end
+end
+
+function MINI_OpenUIView(player_id, uiid)
+    if not player_id or not uiid then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    Player:openUIView(player_id, uiid)
+end
+
+function MINI_HideUIView(player_id, uiid)
+    if not player_id or not uiid then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    Player:hideUIView(player_id, uiid)
+end
+
+function MINI_SetColor(player_id, uiid, element_id, color)
+    if not player_id or not uiid or not element_id or not color then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    if type(color) ~= "string" then
+        return
+    end
+    Customui:setColor(player_id, uiid, element_id, color)
+end
+
+function MINI_PlayAnim(player_id, uiid, element_id, anim, time, state)
+    if not player_id or not uiid or not element_id or not anim then
+        return
+    end
+    if type(player_id) == "table" then
+        return
+    end
+    if type(uiid) ~= "string" then
+        return
+    end
+    if type(element_id) ~= "string" then
+        return
+    end
+    Customui:PlayElementAnim(player_id, uiid, element_id, anim, time, state)
+end

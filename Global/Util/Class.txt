@@ -1,0 +1,119 @@
+function Class(super)
+    local class
+    if super then
+        class = setmetatable({}, {__index = super})
+        class.super = super
+    else
+        class = {ctor = function () end}
+    end
+    class.__index = class
+
+    function class.New(...)
+        local instance = setmetatable({}, class)
+        local function create(inst, ...)
+            if type(inst.super) == "table"  then
+                create(inst.super, ...)
+            end
+            if type(inst.ctor) == "function" then
+                inst.ctor(instance, ...)
+            end
+        end
+        create(instance, ...)
+        return instance
+    end
+    return class
+end
+
+Component = {}
+
+-- util
+Component.Util = {}
+Component.Util.ReddotNode = Class()
+Component.Util.DmgTipsLabel = Class()
+
+-- base
+Component.Base = {}
+Component.Base.Area1 = Class()
+Component.Base.Block1 = Class()
+Component.Base.Respawn = Class()
+Component.Base.Map = Class()
+Component.Base.Entity = Class()
+Component.Base.UI = Class()
+Component.Base.PlayerModule = Class()
+Component.Base.Skill = Class()
+Component.Base.Config = Class()
+
+-- manager
+Component.Manager = {}
+Component.Manager.PlayerManager = Class()
+Component.Manager.EntityManager = Class()
+Component.Manager.MonsterManager = Class()
+Component.Manager.GameManager = Class()
+Component.Manager.LogManager = Class()
+Component.Manager.EventBlockManager = Class()
+Component.Manager.NpcManager = Class()
+Component.Manager.AreaManager = Class()
+Component.Manager.RespawnManager = Class()
+Component.Manager.MapManager = Class()
+Component.Manager.RankManager = Class()
+Component.Manager.ConfigManager = Class()
+Component.Manager.GameOtherManager = Class()
+Component.Manager.CollectManager = Class()
+
+
+-- entity
+Component.Model = {}
+Component.Model.Portal = Class(Component.Base.Area1)
+Component.Model.CommonRespawn = Class(Component.Base.Respawn)
+Component.Model.BossRespawn = Class(Component.Base.Respawn)
+Component.Model.BlockRespawn = Class(Component.Model.BossRespawn)
+Component.Model.MonsterBlock = Class(Component.Base.Block1)
+Component.Model.SafeZone = Class(Component.Base.Area1)
+Component.Model.LimitStore = Class()
+Component.Model.ReddotNode = Class()
+
+-- entity
+Component.Entity = {}
+Component.Entity.Player = Class(Component.Base.Entity)
+Component.Entity.Monster = Class(Component.Base.Entity)
+Component.Entity.Npc = Class(Component.Base.Entity)
+Component.Entity.SoulRing = Class(Component.Base.Entity)
+Component.Entity.Ride = Class(Component.Base.Entity)
+Component.Entity.UINpc = Class(Component.Entity.Npc)
+Component.Entity.RecoveryNpc = Class(Component.Entity.Npc)
+
+-- player_module
+Component.Player = {}
+Component.Player.InputManager = Class(Component.Base.PlayerModule)
+Component.Player.EventManager = Class(Component.Base.PlayerModule)
+Component.Player.UIManager = Class(Component.Base.PlayerModule)
+Component.Player.DataManager = Class(Component.Base.PlayerModule)
+Component.Player.DetailInfo = Class(Component.Base.PlayerModule)
+Component.Player.Map = Class(Component.Base.PlayerModule)
+Component.Player.Online = Class(Component.Base.PlayerModule)
+Component.Player.Recharge = Class(Component.Base.PlayerModule)
+Component.Player.Reddot = Class(Component.Base.PlayerModule)
+Component.Player.Setting = Class(Component.Base.PlayerModule)
+Component.Player.SignIn = Class(Component.Base.PlayerModule)
+
+-- ui
+Component.UI = {}
+Component.UI.Main = Class(Component.Base.UI)
+Component.UI.OtherInfo = Class(Component.Base.UI)
+Component.UI.Rank = Class(Component.Base.UI)
+Component.UI.RoleInfo = Class(Component.Base.UI)
+Component.UI.Skill = Class(Component.Base.UI)
+Component.UI.TP = Class(Component.Base.UI)
+Component.UI.QuickUseRing = Class(Component.Base.UI)
+Component.UI.Notify = Class(Component.Base.UI)
+Component.UI.DmgTips = Class(Component.Base.UI)
+Component.UI.QuickSkill = Class(Component.Base.UI)
+Component.UI.GM = Class(Component.Base.UI)
+Component.UI.Collect = Class(Component.Base.UI)
+Component.UI.Stove = Class(Component.Base.UI)
+
+-- Config
+Component.Config = {}
+Component.Config.AdminConfig = Class(Component.Base.Config)
+Component.Config.AttrConfig = Class(Component.Base.Config)
+Component.Config.MapConfig = Class(Component.Base.Config)

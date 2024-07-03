@@ -1,0 +1,227 @@
+local UIManager = Component.Player.UIManager
+
+local panel_list = {
+    -- Main = {uiid = "7366514520665878444"},
+    -- Auto = {uiid = "7368765186608197548"},
+    -- GM = {uiid = "7379141806120497068"},
+    -- Skill = {uiid = "7369461941972758444"},
+    -- ItemTips = {uiid = "7382144095634583468"},
+    -- Charm = {uiid = "7366536747121635244"},
+    -- Bag = {uiid = "7372116811582271404"},
+	-- ForgeCharm = {uiid = "7374285065692114860"},
+    -- TP = {uiid = "7372087816258056108"},
+    -- Pass = {uiid = "7372117236784033708"},
+    -- Tips = {uiid = "7383938945287712684"},
+    -- AFK = {uiid = "7383965913387364268"},
+    -- BossBox = {uiid = "7384317538064920492"},
+    -- Guide = {uiid = "7384395826728791980"},
+    -- Rank = {uiid = "7372080781101625260"},
+    -- Shop = {uiid = "7385069200291393452"},
+    -- Achievement = {uiid = "7373500250613084076"},
+    -- PromotionLevel = {uiid = "7385142966354702252"},
+    -- Collect = {uiid = "7385838626502602668"},
+}
+
+local update_panel = {
+    -- UIPanel.Auto, UIPanel.Main
+}
+
+local quick_key_check_panel = {
+    -- UIPanel.Guide, UIPanel.Auto, UIPanel.Main,
+}
+
+local empty_panel = ""
+
+function UIManager:ctor(player)
+    self.player = player
+    self.panel_list = {}
+    self.open_time = {}
+    self.second_click = 0
+end
+
+function UIManager:Init()
+    for type, _ in pairs(panel_list) do
+        local ui = Component.UI[type].New(self.player, self)
+        ui:Init()
+        self.panel_list[type] = ui
+    end
+    if not G_ConfigManager.AdminConfig:GetPlayerIsWhite(self.player:GetPlayerId()) then
+        self.panel_list[UIPanel.GM] = nil
+        self.panel_list[UIPanel.Collect] = nil
+    end
+end
+
+function UIManager:OnLoadDone()
+    -- self:OpenUI(UIPanel.Main)
+    -- self:OpenUI(UIPanel.Auto)
+    -- self:OpenUI(UIPanel.ItemTips)
+    -- self:OpenUI(UIPanel.Tips)
+    -- self:OpenUI(UIPanel.Guide)
+    -- self:OpenUI(UIPanel.AFK)
+    -- self:OpenUI(UIPanel.DmgTips)
+    -- self:OpenUI(UIPanel.QuickSkill)
+end
+
+function UIManager:OpenUI(panel_type, param)
+    local ui = panel_list[panel_type]
+    if not ui then
+        error(string.format('cant find panel by %s', panel_type or "nil"), 2)
+        return
+    end
+    local panel = self:GetPanel(panel_type)
+    if not panel then
+        return
+    end
+    local auth = panel:GetAuth()
+    if not auth then
+        return
+    end
+    panel:SetState(true)
+    panel:SetInitParam(param)
+    MINI_OpenUIView(self.player:GetPlayerId(), ui.uiid)
+    -- self.player.GuideManager:CheckGuide(GuideType.openUI)
+end
+
+function UIManager:CloseUI(panel_type)
+    local ui = panel_list[panel_type]
+    if not ui then
+        return
+    end
+    local panel = self:GetPanel(panel_type)
+    if not panel then
+        return
+    end
+    panel:SetState(false)
+    panel:OnClose()
+    MINI_HideUIView(self.player:GetPlayerId(), ui.uiid)
+end
+
+function UIManager:GetPanel(panel_type)
+    local panel = self.panel_list[panel_type or 0]
+    return panel
+end
+
+function UIManager:OnUIOpen(panel_type)
+    local time = os.time()
+    if time == self.open_time[panel_type] then
+        return
+    end
+    self.open_time[panel_type] = time
+    local ret, res = pcall(function ()
+        local panel = self:GetPanel(panel_type)
+        if not panel then
+            return
+        end
+        panel:InitPanel()
+    end)
+    if not ret then
+        G_LogManager:error(res)
+    end
+end
+
+function UIManager:OnUIButtonClick(panel_type, e)
+    local ret, res = pcall(function ()
+        local time = os.time()
+        if self.last_click_time == time then
+            if self.second_click > CONST.SecondButtonMaxTriggerTimes then
+                return
+            end
+            self.second_click = self.second_click + 1
+        else
+            self.second_click = 1
+        end
+        self.last_click_time = time
+
+        local ui = panel_list[panel_type]
+        if not ui then
+            return
+        end
+        if e.CoustomUI ~= ui.uiid and not e.pass then
+            return
+        end
+        local panel = self:GetPanel(panel_type)
+        if not panel then
+            return
+        end
+        panel:OnUIButtonClick(e)
+        -- self.player.Reddot:CheckReddot(e.btnelenemt)
+    end)
+    if not ret then
+        G_LogManager:error(res)
+    end
+end
+
+function UIManager:OnLostFocus(panel_type, e)
+    local ui = panel_list[panel_type]
+    if not ui then
+        return
+    end
+    if e.CoustomUI ~= ui.uiid and not e.pass then
+        return
+    end
+    local panel = self:GetPanel(panel_type)
+    if not panel then
+        return
+    end
+    panel:OnLostFocus(e)
+end
+
+function UIManager:GetPanelState(panel_type)
+    local panel = self:GetPanel(panel_type)
+    if not panel then
+        return
+    end
+    return panel:GetState()
+end
+
+function UIManager:OnKeyDown(key)
+    for index, value in ipairs(quick_key_check_panel) do
+        local panel = self:GetPanel(value)
+        if panel then
+            local state = panel:GetState()
+            if state then
+                local trigger = panel:OnKeyDown(key)
+                if trigger then
+                    break
+                end
+            end
+        end
+    end
+end
+
+function UIManager:Update(second)
+    for index, value in ipairs(update_panel) do
+        local panel = self.panel_list[value]
+        if panel then
+            local state = panel:GetState()
+            if state then
+                panel:Update(second)
+            end
+        end
+    end
+end
+
+function UIManager:RefreshPanelState(panel_type)
+    local panel = self:GetPanel(panel_type)
+    if not panel then
+        return
+    end
+    local state = self:GetPanelState(panel_type)
+    if not state then
+        return
+    end
+    panel:RefreshPanelState()
+end
+
+-- 用来刷新已打开页面
+function UIManager:RefreshOpenPanel(panel_type)
+    local panel = self:GetPanel(panel_type)
+    if not panel then
+        return
+    end
+    local state = self:GetPanelState(panel_type)
+    if not state then
+        return
+    end
+    self:OpenUI(panel_type)
+end

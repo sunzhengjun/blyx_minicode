@@ -1,0 +1,76 @@
+local CommonRespawn = Component.Model.CommonRespawn
+
+
+function CommonRespawn:ctor(manager, config)
+    self.last_second = 0
+end
+
+
+function CommonRespawn:Init()
+    self:RefreshGraphicsText()
+end
+
+function CommonRespawn:RefreshGraphicsText()
+    
+end
+
+function CommonRespawn:GetCurNum()
+    return #self.monster_list
+end
+
+function CommonRespawn:CreateMonster()
+    -- if self.thread_running then
+    --     return
+    -- end
+    -- self.thread_running = true
+    -- threadpool:work(function ()
+    -- end)
+    self.monster_num = 0
+    local num = self:GetCurNum() + 1
+    for i = num, self.config.num, 1 do
+        local rand_pos = self:GetRandomPos()
+        local result,id = Block:getBlockID(rand_pos.x, rand_pos.y, rand_pos.z)
+        
+        -- if not id or id == 0 or id == 3 or id == 4 then
+        --     local mosnter = G_MonsterManager:CreateMonster(self, rand_pos, self.config.monster_id)
+        --     mosnter:StopMoveAttr()
+        --     table.insert(self.monster_list, mosnter)
+        -- end
+        local mosnter = G_MonsterManager:CreateMonster(self, rand_pos, self.config.monster_id)
+        table.insert(self.monster_list, mosnter)
+    end
+    self.monster_num = #self.monster_list
+    -- self.thread_running = nil
+end
+
+function CommonRespawn:CheckCreateMonster()
+    if not self.monster_num then
+        return
+    end
+    if self.monster_num >= self.config.num then
+        return
+    end
+    self:CreateMonster()
+end
+
+function CommonRespawn:MonsterDie(monster)
+    for i = 1, #self.monster_list, 1 do
+        local value = self.monster_list[i]
+        if value == monster then
+            table.remove(self.monster_list, i)
+            break
+        end
+    end
+end
+
+function CommonRespawn:Update(second)
+    if not second then
+        return
+    end
+    self:CheckCreateMonster()
+    -- if self.last_second + self.config.cd > second then
+    --     return
+    -- end
+    -- self.last_second = second
+    self:CreateMonster()
+end

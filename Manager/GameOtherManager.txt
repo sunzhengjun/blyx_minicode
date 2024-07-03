@@ -1,0 +1,99 @@
+local GameOtherManager = Component.Manager.GameOtherManager
+
+local GodTreeArea = Component.Model.GodTreeArea
+local IdlePoolArea = Component.Model.IdlePoolArea
+local godTreeAreaBeginPos = {x = 7, y = 57, z = 32}
+local godTreeAreaEndPos = {x = -11, y = 65, z = 15}
+
+local pool_area_begin_pos = {x = 74, y = 46, z = -125}
+local pool_area_end_pos = {x = 47, y = 65, z = -101}
+
+local drop_area = {
+    point = {x = 32, y = 49, z = -92},
+    min_r = 15,
+    max_r = 24,
+}
+
+-- 一些杂项创建
+function GameOtherManager:ctor()
+    self.drop_item_queue = {}
+end
+
+function GameOtherManager:Init()
+    -- 创建神树区域
+    local id = G_GameManager:CreateAreaOfRange(godTreeAreaBeginPos, godTreeAreaEndPos)
+    if id then
+        local area = GodTreeArea.New(id)
+        area:Init()
+        G_AreaManager:AddArea(id, area)
+    end
+    -- -- 创建挂机池区域
+    -- local id2 = G_GameManager:CreateAreaOfRange(pool_area_begin_pos, pool_area_end_pos)
+    -- if id2 then
+    --     local area = IdlePoolArea.New(id2)
+    --     area:Init()
+    --     G_AreaManager:AddArea(id2, area)
+    --     self.idle_pool = area
+    -- end
+end
+
+function GameOtherManager:GetMainCityDropRandomPos()
+    local xz = math.random(1, 2)
+    local x_symbol = math.random(1, 2) == 1 and 1 or -1
+    local z_symbol = math.random(1, 2) == 1 and 1 or -1
+    local x = math.random(xz == 1 and 1 or drop_area.min_r, drop_area.max_r) * x_symbol
+    local z = math.random(xz ~= 1 and 0 or drop_area.min_r, drop_area.max_r) * z_symbol
+    local offset = Vector3.New(x, 0, z)
+    local rand_pos = offset + drop_area.point
+    return rand_pos
+end
+
+function GameOtherManager:MainCityDrop(items)
+    for index, item in ipairs(items) do
+        local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(item.id)
+        if item_config and item_config.plugin_id then
+            for i = 1, item.num, 1 do
+                local rand_pos = self:GetMainCityDropRandomPos()
+                if rand_pos then
+                    self:CreateCreatePluginItem(rand_pos, item_config.plugin_id, 1)
+                end
+            end
+        end
+    end
+end
+
+function GameOtherManager:Update(second)
+    if not second then
+        return
+    end
+    if self.idle_pool then
+        self.idle_pool:Update()
+    end
+end
+
+function GameOtherManager:CreateCreatePluginItem(pos, id, num)
+    table.insert(self.drop_item_queue, {pos = pos, id = id, num = num})
+    if self.drop_thread_running then
+        return
+    end
+    self.drop_thread_running = true
+    threadpool:work(function ()
+        local times = 0
+        while true do
+            if #self.drop_item_queue == 0 then
+                break
+            end
+            local drop_info = table.remove(self.drop_item_queue, 1)
+            if not drop_info then
+                break
+            end
+            G_GameManager:CreatePluginItem(drop_info.pos, drop_info.id, drop_info.num)
+            times = times + 1
+            if times % CONST.CreatePluginMaxNum == 0 then
+                G_GameManager:WaitForSecond(CONST.Ticket * 5)
+                times = 0
+            end
+        end
+        self.drop_thread_running = nil
+    end)
+end

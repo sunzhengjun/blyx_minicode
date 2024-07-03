@@ -1,0 +1,220 @@
+local Monster = Component.Entity.Monster
+
+local normal_speed = 300
+
+function Monster:ctor(id, respawn, monster_config)
+    self.respawn = respawn
+    self.monster_config = monster_config
+    self.name = monster_config.name or ""
+    self.player_collide_times = 0
+    self.save_time = 0
+end
+
+function Monster:Init()
+    self:RefreshProp()
+    self:RefreshLabel()
+    self:RefreshModelSize()
+end
+
+function Monster:RefreshProp()
+    self:SetAttr(self.monster_config.props)
+    local time = os.time()
+    self.save_time = time
+    -- if self.monster_config.type == MonsterType.noraml or self.monster_config.type == MonsterType.elite then   -- 小怪 精英
+    -- end
+    self:SetActionAttrState(ActorActionType.move, false)
+    self:SetCreateAttr(CreateAttrType.speed, 0)
+end
+
+function Monster:GetName()
+    return self.name
+end
+
+function Monster:GetMonsterConfig()
+    return self.monster_config
+end
+
+function Monster:GetConfigId()
+    return self.monster_config.id
+end
+
+function Monster:RefreshLabel()
+    
+end
+
+function Monster:Update()
+    
+end
+
+function Monster:GetDropItem()
+    
+end
+
+function Monster:DropPlugin()
+end
+
+function Monster:Die(killer_id)
+    -- 掉落获取
+    local player = G_PlayerManager:GetPlayer(killer_id)
+    if not player then
+        return 
+    end
+    local afkState = player.AFKManager:GetAfkState()
+    local rwds = {}
+    for index, value in ipairs(self.monster_config.drop or {}) do
+        local rand = math.random(1, CONST.NormalMaxWeight)
+        if rand < value.rate then
+            -- local ids = (value.id or {})
+            -- if ids and #ids > 0 then
+            --     local rand_id_idx = math.random(1, #value.id)
+            --     local item_id = ids[rand_id_idx]
+            --     local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(item_id)
+            --     if item_config and item_config.plugin_id then
+            --         local num = math.random(value.min, value.max)
+            --         G_GameManager:CreatePluginItem(self:GetPos(), item_config.plugin_id, num)
+            --     end
+            -- end
+            
+            local itemId = value.id
+            local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(itemId)
+            if item_config then
+                if not afkState or item_config.type == ItemType.exp then
+                    local item = {id = itemId, num = value.num}
+                    player:AddBoundItem(item)
+                    table.insert(rwds, item)
+                    -- player:SendTips(string.format(TIPS_CONST.GetItemTips, item_config.name, NumToString(value.num)))
+                else
+                    player.AFK:AddItem(itemId, value.num)
+                end
+                -- G_GameManager:CreatePluginItem(self:GetPos(), item_config.plugin_id, num)
+            end
+        end
+    end
+    player.EventManager:Trigger(PlayerEventEnum.itemListNotify, rwds)
+    local boxId = self.monster_config.boxId
+    if boxId then
+        local boxConfig = G_ConfigManager.BossBoxConfig:GetBossBoxConfigById(boxId)
+        if not boxConfig then
+            return
+        end
+        player.DetailInfo:SetCurBossBox(boxId)
+        player.UIManager:OpenUI(UIPanel.BossBox)
+        -- player.EventManager:Trigger(PlayerEventEnum.getBossBox, boxId)
+    end
+    
+    local monsterConfig = self:GetMonsterConfig()
+    if monsterConfig.type == MonsterType.bigBoss then
+        local mapId = self.respawn:GetMapId()
+        local bossMapId = player.Map:GetKillBossMapId()
+        if bossMapId < mapId then
+            player.Map:SetKillBossMapId(mapId)
+        end
+    end
+    
+    self.respawn:MonsterDie(self)
+    G_MonsterManager:MonsterDie(self:GetObjId(), self.respawn)
+end
+
+function Monster:SetName(name)
+    self.name = name
+    self:RefreshLabel()
+end
+
+function Monster:PropCheck()
+    self:RefreshModelSize()
+    local result,max_hp = self:GetAttr(CreateAttrType.max_hp)
+    if not max_hp then
+        return
+    end
+    
+    if max_hp == self.max_hp then
+        return
+    end
+    
+    if math.abs(max_hp - self.max_hp) < self.max_hp / 10 then
+        return
+    end
+    self:SetAttr(self.prop)
+end
+
+function Monster:RefreshModelSize()
+    if self.monster_config.modelSize then
+        self:SetCreateAttr(CreateAttrType.model_size, self.monster_config.modelSize)
+    end
+end
+
+function Monster:OnActorChangeMotion()
+    self:PropCheck()
+end
+
+function Monster:OnActorCreate()
+    self:PropCheck()
+end
+
+function Monster:OnActorBeHurt(attacker_id, dmg)
+    self:OpenMoveAttr()
+    self:PropCheck()
+end
+
+function Monster:SetAttr(props)
+    self.prop = props
+    self.propMap = {}
+    for index, value in ipairs(self.prop or {}) do
+        if value.type == PLAYER_ATTR_TYPE.atk then
+            self:SetCreateAttr(CreateAttrType.remote_atk, value.value)
+            self:SetCreateAttr(CreateAttrType.atk, value.value)
+        elseif value.type ~= PLAYER_ATTR_TYPE.def then
+            local attr_config = G_ConfigManager.AttrConfig:GetAttrConfigByType(value.type)
+            if attr_config and attr_config.actor_type then
+                self:SetCreateAttr(attr_config.actor_type, value.value)
+                if attr_config.actor_type == CreateAttrType.max_hp then
+                    self:SetCreateAttr(2, value.value)
+                    self.max_hp = value.value
+                end
+            end
+        end
+        self.propMap[value.type] = value.value
+    end
+end
+
+function Monster:OpenMoveAttr()
+    self:SetCreateAttr(CreateAttrType.speed, normal_speed)
+end
+
+function Monster:StopMoveAttr()
+    self:SetCreateAttr(CreateAttrType.speed, 0)
+end
+
+function Monster:OnActorBeat(target_id)
+    
+end
+
+function Monster:OnAttackHit(target_id)
+    -- local entity = G_EntityManager:GetEntity(target_id)
+    -- if not entity then
+    --     return
+    -- end
+    -- local owner = entity:GetOwner()
+    -- if not owner then
+    --     return
+    -- end
+    -- local atk = self:GetAttr(CreateAttrType.atk)
+    -- self:ActorHurt(owner, atk, HurtType.melee)
+end
+
+function Monster:GetIcon()
+    local result,iconid = Customui:getMonsterObjIcon(self:GetObjId())
+    return tostring(iconid or "")
+end
+
+function Monster:GetDef()
+    return self.monster_config.def or 0
+end
+
+function Monster:OnPlayerClick(playerId)
+    local player = G_PlayerManager:GetPlayer(playerId)
+    if not player then
+        return 
+    end
+    player.CharmManager:SelectTarget(self:GetObjId())
+end

@@ -1,0 +1,61 @@
+local Npc = Component.Entity.Npc
+
+local normal_height = 13
+
+function Npc:ctor(id, npc_config)
+    self.npc_config = npc_config
+end
+
+function Npc:Init()
+    self:RefreshLabel()
+    self:SetActionAttrState(ActorActionType.be_attacked, false)
+    self:SetActionAttrState(ActorActionType.move, false)
+end
+
+function Npc:RefreshLabel()
+    -- local str = string.format(self.npc_config.title, self.npc_config.name)
+    -- local text_size = 20
+    -- self:SetTitleLabel(str, text_size, self.npc_config.height)
+end
+
+function Npc:SetTitleLabel(context, text_size, height)
+    local obj_id = self:GetObjId()
+    if not obj_id then
+        return
+    end
+    
+    if self.graphid then
+        Graphics:removeGraphicsByObjID(obj_id, 1, 1)
+        self.graphid = nil
+    end
+    
+    local graphicsInfo=Graphics:makeGraphicsText(context, text_size, 0, 1)
+    local dir={x=0,y=height or normal_height,z=0}--偏移方向
+    --在实体上显示文字板
+    local result, graphid = Graphics:createGraphicsTxtByActor(obj_id, graphicsInfo, dir, 10, 0, 0)
+    self.graphid = graphid
+    
+    local pos = self.npc_config.pos
+    World:playParticalEffect(pos.x, pos.y, pos.z,1025,1)
+end
+
+function Npc:RefreshEntity()
+    local obj_id = self:GetObjId()
+    if not obj_id then
+        obj_id = G_GameManager:CreateActor(self.npc_config.actor_id, self.npc_config.pos)
+        if not obj_id then
+            return
+        end
+        self.obj_id = obj_id
+        G_NpcManager:AddNpc(self)
+    end
+    self:RefreshLabel()
+end
+
+function Npc:OnPlayerClick(player_id)
+    
+end
+
+function Npc:GetConfig()
+    return self.npc_config
+end

@@ -1,0 +1,65 @@
+local SignIn = Component.Player.SignIn
+
+function SignIn:ctor()
+    
+end
+
+function SignIn:Init(data)
+    self.data = data or {}
+    self:InitData()
+end
+
+function SignIn:OnLoadDone()
+    self:CheckReddot()
+end
+
+function SignIn:InitData()
+    self.last_sign_time = self.data.last_sign_time or 0
+    self.sign_day = self.data.sign_day or 0
+end
+
+function SignIn:GetSaveData()
+    local data = self.data
+    data.last_sign_time = self.last_sign_time
+    data.sign_day = self.sign_day
+    return self.data
+end
+
+function SignIn:OnSevenSignIn()
+    local time = os.time()
+    local day_num = GetDateNum(time, self:GeLastSevenSignIn())
+    if day_num == 0 then
+        return false
+    end
+    self.last_sign_time = time
+    self.sign_day = self.sign_day + 1
+    self:CheckReddot()
+    return true
+end
+
+function SignIn:GetSevenSignInDay()
+    return self.sign_day
+end
+
+function SignIn:GeLastSevenSignIn()
+    return self.last_sign_time
+end
+
+function SignIn:CheckReddot()
+    local time = os.time()
+    local day_num = GetDateNum(time, self:GeLastSevenSignIn())
+    local real_day = self:GetSevenSignInDay()
+    local cycle_day = G_ConfigManager.WelfConfig:GetSignMaxDay()
+    local day = real_day
+    if day >= cycle_day then
+        day = day % cycle_day
+    end
+    for i = 1, cycle_day do
+        local num = -1
+        if day_num ~= 0 and i == day + 1 then
+            num = 1
+        end
+        local path = string.format(REDDOT_COSNT.WelfSignInReveice, i)
+        self.player.Reddot:ChangeReddotNum(path, num)
+    end
+end

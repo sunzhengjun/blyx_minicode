@@ -1,0 +1,21 @@
+local Area1 = Component.Base.Area1
+
+function Area1:ctor(area_id)
+    self.area_id = area_id
+end
+
+function Area1:Init()
+    
+end
+
+function Area1:PlayerEnter(player_id)
+    
+end
+
+function Area1:PlayerOut(player_id)
+    
+end
+
+function Area1:GetAreaId()
+    return self.area_id
+end

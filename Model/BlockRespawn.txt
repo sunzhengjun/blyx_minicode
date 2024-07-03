@@ -1,0 +1,79 @@
+local BlockRespawn = Component.Model.BlockRespawn
+
+local MonsterBlock = Component.Model.MonsterBlock
+
+function BlockRespawn:ctor(manager, config)
+    
+end
+
+function BlockRespawn:Init()
+    -- local monster_config = G_ConfigManager.MonsterConfig:GetMonsterConfigById(self.config.monster_id)
+    -- self.monster_name = ""
+    -- if monster_config then
+    --     self.monster_name = string.format("#Y[BOSS]#R%s", monster_config.name)
+    -- end
+    -- local title = string.format("%s#Y[点击召唤]", self.monster_name)
+    -- local block_pos = Vector3.New(self.config.pos)
+    -- local block = MonsterBlock.New(block_pos, self)
+    -- block:Init()
+    -- block:SetTitle(title)
+    -- self.block = block
+    -- G_EventBlockManager:AddBlock(block)
+end
+
+function BlockRespawn:RefreshGraphicsText()
+end
+
+function BlockRespawn:GetRandomPos()
+    local pos = Vector3.New(math.random(-3, 3), 0, math.random(-3, 3)) + self.config.pos
+
+    return pos
+end
+
+function BlockRespawn:CreateMonster()
+    self.monster_num = nil
+    local cur_num = self:GetMonsterNum()
+    if cur_num > 0 then
+        return
+    end
+    self.block:SetExist(false)
+    local rand_pos = self:GetRandomPos()
+    local monster = G_MonsterManager:CreateMonster(self, rand_pos, self.config.monster_id)
+    if monster then
+        table.insert(self.monster_list, monster)
+    end
+    self.monster_num = #self.monster_list
+    self.next_refresh_time = 0
+    self:RefreshState()
+end
+
+function BlockRespawn:MonsterDie(monster)
+    for i = 1, #self.monster_list, 1 do
+        local value = self.monster_list[i]
+        if value == monster then
+            table.remove(self.monster_list, i)
+            break
+        end
+    end
+
+    if next(self.monster_list) then
+        return
+    end
+    -- 刷怪时间
+    local time = os.time()
+    self.next_refresh_time = time + self.config.cd
+    self:RefreshState()
+    self.block:SetExist(true)
+end
+
+function BlockRespawn:Update(second)
+    -- if not second then
+    --     return
+    -- end
+
+    -- self.block:Update(second)
+end
+
+function BlockRespawn:GetStateStr()
+    return STR_CONST.BlockRespawnState
+end

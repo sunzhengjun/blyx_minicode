@@ -1,0 +1,108 @@
+local MonsterManager = Component.Manager.MonsterManager
+
+local Monster = Component.Entity.Monster
+
+function MonsterManager:ctor()
+    self.all_monster = {}
+    self.monster_click_times = {}
+end
+
+function MonsterManager:Init()
+    
+end
+
+function MonsterManager:CreateMonster(respawn, pos, id)
+    -- local actor_id = monster_config.actor_id
+    local mosnter_config = G_ConfigManager.MonsterConfig:GetMonsterConfigById(id)
+    if not mosnter_config then
+        return
+    end
+
+    local obj_id = G_GameManager:CreateActor(mosnter_config.actorId, pos)
+    if not obj_id then
+        return
+    end
+
+    local monster = Monster.New(obj_id, respawn, mosnter_config)
+    monster:Init()
+    self:AddMonster(monster)
+
+    local mapId = respawn:GetMapId()
+    local map = G_MapManager:GetMap(mapId)
+    if map then
+        map:EntityEnterMap(obj_id)
+    end
+
+    return monster
+end
+
+function MonsterManager:AddMonster(monster)
+    local obj_id = monster:GetObjId()
+    if not obj_id then
+        return
+    end
+    G_EntityManager:AddEntity(monster)
+    self.all_monster[obj_id] = monster
+end
+
+function MonsterManager:MonsterDie(id, respawn)
+    -- local monster = self.all_monster[id]
+    -- if not monster then
+    --     return
+    -- end
+    -- monster:Die(killer_id)
+    self.all_monster[id] = nil
+    G_EntityManager:RemoveEntity(id)
+    
+    local mapId = respawn:GetMapId()
+    local map = G_MapManager:GetMap(mapId)
+    if map then
+        map:EntityLeaveMap(id)
+    end
+end
+
+function MonsterManager:Update()
+    
+end
+
+function MonsterManager:OnActorChangeMotion(id, motion)
+    local monster = self.all_monster[id]
+    if not monster then
+        return
+    end
+    monster:OnActorChangeMotion()
+end
+
+function MonsterManager:OnActorCreate(id)
+    local monster = self.all_monster[id]
+    if not monster then
+        return
+    end
+    monster:OnActorCreate()
+end
+
+function MonsterManager:OnActorBeHurt(id)
+    local monster = self.all_monster[id]
+    if not monster then
+        return
+    end
+    monster:OnActorBeHurt()
+end
+
+function MonsterManager:AddClickTimes(id, times)
+    local bf = self:GetClickTimes(id)
+    local new = bf + times
+    self.monster_click_times[id] = new
+end
+
+function MonsterManager:GetClickTimes(id)
+    return self.monster_click_times[id] or 0
+end
+
+function MonsterManager:ResetMonsterClickTimes()
+    self.monster_click_times = {}
+end
+
+function MonsterManager:OnMinute()
+    -- self:ResetMonsterClickTimes()
+end

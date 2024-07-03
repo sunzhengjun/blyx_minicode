@@ -1,0 +1,137 @@
+local Online = Component.Player.Online
+
+local player_online_str = "online_%s"
+local rookie_online_str = "rookie_online_%s"
+
+local rookie_first_stage  = "rookie_first_stage_%s"   -- 新玩家首次离线段位
+local first_online_stage  = "first_online_stage_%s"   -- 非新玩家每日首次上线段位
+local offline_stage  = "offline_stage_%s"   -- 新玩家非首次离线和老玩家离线段位
+
+local online_lv_config = {
+    {key = "0",         min = 0,                  },
+    {key = "5",         min = TIME_CONST.min+1,   },
+    {key = "10",        min = 5*TIME_CONST.min+1, },
+    {key = "15",        min = 10*TIME_CONST.min+1,},
+    {key = "20",        min = 15*TIME_CONST.min+1,},
+    {key = "25",        min = 20*TIME_CONST.min+1,},
+    {key = "30",        min = 25*TIME_CONST.min+1,},
+    {key = "30_plus",   min = 30*TIME_CONST.min+1,},
+}
+
+function Online:ctor(player)
+    self.player = player
+end
+
+function Online:Init(data)
+    self:InitData(data)
+    if self:GetDayFirstState() then
+        if self:GetRookieSign() then
+            G_CollectManager:AddSystemLogTimes(SystemLogEnum.new_player, 1)
+        else
+            G_CollectManager:AddSystemLogTimes(SystemLogEnum.day_first_login, 1)
+        end
+    end
+    if self:GetRookieSign() then
+        G_CollectManager:AddSystemLogTimes(SystemLogEnum.new_player_login, 1)
+    end
+    G_CollectManager:AddSystemLogTimes(SystemLogEnum.login, 1)
+end
+
+function Online:InitData(data)
+    local time = os.time()
+    data = data or {}
+    self.register_time = data.register_time or time
+    self.login_time = time
+    self.last_online_time = data.last_online_time or 0
+    self.play_time = data.play_time or 0
+    self.last_record_time = time
+end
+
+function Online:OnLoadDone()
+    local lv = self.player.DetailInfo:GetLv()
+    local lvConfig = G_ConfigManager.PlayerConfig:GetLvConfigByLv(lv)
+    if lvConfig then
+        if not self:GetRookieSign() and self:GetDayFirstState() then
+            local str = string.format(first_online_stage, lvConfig.stage)
+            G_CollectManager:AddSystemLogTimes(SystemLogEnum[str], 1)
+        end
+    end
+end
+
+function Online:GetDayFirstState()
+    local time = os.time()
+    local day_num = GetDateNum(time, self.last_online_time)
+    return day_num ~= 0
+end
+
+function Online:GetRookieSign()
+    local time = os.time()
+    local day_num = GetDateNum(time, self.register_time)
+    return day_num == 0
+end
+
+function Online:GetSaveData()
+    self:RecordOnlineTime()
+    local time = os.time()
+    local data = {
+        last_login_time = self.login_time,
+        last_online_time = time,
+        play_time = self.play_time,
+        register_time = self.register_time,
+    }
+    return data
+end
+
+function Online:RecordOnlineTime()
+    local time = os.time()
+    local play_time = (self.play_time or 0) + time - self.last_record_time
+    self.play_time = play_time
+    self.last_record_time = time
+end
+
+function Online:Update(second)
+    if not second then
+        return
+    end
+    local time = os.time()
+    local diff = time - self.login_time
+    if diff <= 0 then
+        return
+    end
+    if diff % TIME_CONST.min == 0 then
+        -- self.player.EventManager:Trigger(PlayerEventEnum.online_second_5)
+        self.player:OnTriggerEventHook(EventHookType.online, 1)
+    end
+end
+
+function Online:LeaveGame()
+    local time = os.time()
+    local online_time = time - self.login_time
+    local online_template_str = self:GetRookieSign() and rookie_online_str or player_online_str
+    local key
+    for index, value in ipairs(online_lv_config) do
+        if online_time > value.min then
+            key = value.key
+        end
+    end
+    if key then
+        local enum_str = string.format(online_template_str, key)
+        G_CollectManager:AddSystemLogTimes(SystemLogEnum[enum_str], 1)
+    end
+    local offline_stage_template = offline_stage
+    if self:GetRookieSign() then
+        G_CollectManager:AddSystemLogTimes(SystemLogEnum.rookie_total_time, online_time)
+        if self:GetDayFirstState() then
+            offline_stage_template = rookie_first_stage
+        end
+    end
+    G_CollectManager:AddSystemLogTimes(SystemLogEnum.total_time, online_time)
+    G_CollectManager:AddSystemLogTimes(SystemLogEnum.logout, 1)
+    -- 离线上传阶段
+    local lv = self.player.DetailInfo:GetLv()
+    local lvConfig = G_ConfigManager.PlayerConfig:GetLvConfigByLv(lv)
+    if lvConfig then
+        local offline_stage_str = string.format(offline_stage_template, lvConfig.stage)
+        G_CollectManager:AddSystemLogTimes(SystemLogEnum[offline_stage_str], 1)
+    end
+end

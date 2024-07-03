@@ -1,0 +1,45 @@
+local MonsterBlock = Component.Model.MonsterBlock
+
+local block_id = 536
+
+function MonsterBlock:ctor(pos, respawn)
+    self.respawn = respawn
+end
+
+function MonsterBlock:Init()
+    self:SetExist(true)
+end
+
+function MonsterBlock:SetTitle(title)
+    self.title = title
+    self:RefreshLabel()
+end
+
+function MonsterBlock:OnPlayerClick(player)
+    local exist = self:GetExist()
+    if not exist then
+        return
+    end
+    self.respawn:CreateMonster()
+    self:RefreshBlock()
+end
+
+function MonsterBlock:Update(second)
+    if not second then
+        return
+    end
+    self:RefreshBlock()
+end
+
+function MonsterBlock:RefreshBlock()
+    local pos = self.pos
+    if self:GetExist() then
+        Block:placeBlock(block_id, pos.x, pos.y, pos.z, 0)
+    else
+        self:DestroyBlock()
+    end
+end
+
+function MonsterBlock:RefreshLabel()
+    self:SetTitleLabel(self.title, 20)
+end

@@ -1,0 +1,84 @@
+local DataManager = Component.Player.DataManager
+--计时器
+
+function DataManager:ctor(player, data)
+    self.player = player
+    self.save_sign = false
+    self.cache_data = data or {}
+end
+
+function DataManager:Init(data)
+    self.cache_data = data
+    local time = os.time()
+    self.cache_time = time + CONST.PlayerDataCacheMinTimeInterval
+    self.save_time = time + CONST.PlayerDataSaveMinTimeInterval
+    self.login_time = time
+end
+
+function DataManager:SetSaveSign(sign)
+    self.save_sign = sign
+end
+
+function DataManager:CachePlayerData()
+    if not self.save_sign then
+        return
+    end
+    local player = self.player
+    -- 玩家数据 以及模块数据
+    self.cache_data = player:GetSaveData()
+end
+
+function DataManager:GetCacheData()
+    return self.player:GetSaveData()
+end
+
+function DataManager:SavePlayerDataToCloud()
+    if not self.save_sign then
+        return
+    end
+    if not self.cache_data or not next(self.cache_data) then
+        return
+    end
+    local ret = CloudSever:setDataListBykey(CONST.PlayerDataDBName, self.player:GetPlayerId(), JSON:encode(self.cache_data))
+    if ret == ErrorCode.OK then
+        print("上传玩家基础数据成功11")
+    else
+        print("上传玩家基础数据失败11")
+    end
+end
+
+function DataManager:Update()
+    local time = os.time()
+    if time > self.cache_time then
+        self:CachePlayerData()
+        self.cache_time = time + math.random(CONST.PlayerDataCacheMinTimeInterval, CONST.PlayerDataCacheMaxTimeInterval)
+    end
+
+    if time > self.save_time then
+        self:SavePlayerDataToCloud()
+        self.save_time = time + math.random(CONST.PlayerDataSaveMinTimeInterval, CONST.PlayerDataSaveMaxTimeInterval)
+    end
+end
+
+function DataManager:OnPlayerBuyItem()
+    self:CachePlayerData()
+end
+
+function DataManager:OnlineTimeReport()
+    -- --时长埋点上报
+    -- local id = self.player:GetPlayerId()
+    -- local time = os.time()
+    -- local curGameTime = time - self.login_time
+    -- local m = math.floor(curGameTime / 60)
+    -- print("时长埋点上报" .. id .. "  " ..reportStr)
+    -- Player:StandReportEvent(id, reportStr)
+    print("玩家离开游戏")
+end
+
+function DataManager:LeaveGame()
+    self:OnlineTimeReport()
+    self:CachePlayerData()
+    self:SavePlayerDataToCloud()
+    self.save_sign = false
+    self.cache_data = nil
+end

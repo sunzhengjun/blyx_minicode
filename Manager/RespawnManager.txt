@@ -1,0 +1,64 @@
+local RespawnManager = Component.Manager.RespawnManager
+
+local BossRespawn = Component.Model.BossRespawn
+local CommonRespawn = Component.Model.CommonRespawn
+
+local BlockRespawn = Component.Model.BlockRespawn   -- 点方块刷
+
+local stepNum = 25
+
+function RespawnManager:ctor()
+    self.respawn_list = {}
+    self.updateList = {}
+    self.idx = 0
+end
+
+function RespawnManager:Init()
+    
+    local respawn_config = G_ConfigManager.RespawnConfig:GetRespawnConfig()
+    for index, value in ipairs(respawn_config) do
+        local respawn
+        if value.type == RespawnType.boss then
+            respawn = BossRespawn.New(self, value)
+        elseif value.type == RespawnType.common then
+            respawn = CommonRespawn.New(self, value)
+        elseif value.type == RespawnType.block_boss then   -- 点方块刷
+            respawn = BlockRespawn.New(self, value)
+        end
+        if respawn then
+            respawn:Init()
+            self:AddRespawn(value.id, respawn)
+            table.insert(self.updateList, respawn)
+        end
+    end
+end
+
+function RespawnManager:GetRespawn(id)
+    return self.respawn_list[id or 0]
+end
+
+function RespawnManager:AddRespawn(id, respawn)
+    self.respawn_list[id] = respawn
+end
+
+function RespawnManager:Update(second)
+    if not second then
+        return
+    end
+    if second == 0 then
+        return 
+    end
+    local beginIdx = self.idx * stepNum
+    local endIdx = beginIdx + stepNum-1
+    for i = beginIdx, endIdx, 1 do
+        local realIdx = i % #self.updateList
+        if realIdx == 0 then
+            realIdx = #self.updateList
+        end
+        self.updateList[realIdx]:Update(second)
+    end
+    -- for index, value in pairs(self.respawn_list) do
+    --     value:Update(second)
+    -- end
+    self.idx = self.idx + 1
+end

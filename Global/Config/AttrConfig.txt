@@ -1,0 +1,163 @@
+local attr_config = {
+    {name = [[最大生命值]], type = 1, pow = 0, rate = 0, actor_type = 1},
+    {name = [[攻击力]], type = 2, pow = 0, rate = 0},
+    {name = [[防御]], type = 3, pow = 0, rate = 0},
+    {name = [[暴击率]], type = 4, pow = 0, rate = 0},
+    {name = [[暴击伤害]], type = 5, pow = 0, rate = 0},
+    {name = [[命中率]], type = 6, pow = 0, rate = 0},
+    {name = [[躲闪率]], type = 7, pow = 0, rate = 0},
+    {name = [[抗爆伤]], type = 8, pow = 0, rate = 0},
+    {name = [[攻击速度]], type = 9, pow = 0, rate = 0},
+    {name = [[血量恢复]], type = 10, pow = 0, rate = 0},
+    {name = [[力量]], type = 11, pow = 0, rate = 0},
+    {name = [[敏捷]], type = 12, pow = 0, rate = 0},
+    {name = [[耐力]], type = 13, pow = 0, rate = 0},
+    {name = [[移动速度]], type = 14, pow = 0, rate = 0},
+    {name = [[最大体力值]], type = 15, pow = 0, rate = 0},
+    {name = [[最大储水量]], type = 16, pow = 0, rate = 0},
+    {name = [[最大体能]], type = 17, pow = 0, rate = 0},
+    {name = [[最大负重]], type = 18, pow = 0, rate = 0},
+    {name = [[最大嗅觉]], type = 19, pow = 0, rate = 0},
+    
+}
+
+local propRateDesc = "%s+%s%%"
+local propDesc = "%s+%s"
+
+local attr_map = {}
+local system_attrs = {}
+local rateAttrs = {}
+
+local function init_attr_config()
+    for index, value in ipairs(attr_config) do
+        attr_map[value.type] = value
+        if value.actor_type then
+            table.insert(system_attrs, value.type)
+        end
+        if value.targetType then
+            table.insert(rateAttrs, value.type)
+        end
+    end
+end
+
+init_attr_config()
+
+local AttrConfig = Component.Config.AttrConfig
+
+function AttrConfig:ctor()
+    
+end
+
+function AttrConfig:Init()
+    
+end
+
+function AttrConfig:GetAttrConfigByType(attr_type)
+    return attr_map[attr_type or 0]
+end
+
+function AttrConfig:GetPropsPow(props)
+    local pow = 0
+    for index, value in ipairs(props or {}) do
+        local config = self:GetAttrConfigByType(value.type)
+        if config then
+            pow = pow + math.floor(config.pow * value.value)
+        end
+    end
+    return pow
+end
+
+function AttrConfig:GetPropMapPow(prop_map)
+    local pow = 0
+    for prop_type, value in pairs(prop_map or {}) do
+        local config = self:GetAttrConfigByType(prop_type)
+        if config then
+            pow = pow + math.floor(config.pow * value)
+        end
+    end
+    return pow
+end
+
+function AttrConfig:GetSystemAttrType()
+    return system_attrs
+end
+
+function AttrConfig:GetRateAttrType()
+    return rateAttrs
+end
+
+-- p1 attacker
+-- p1Bonus 伤害加成
+function AttrConfig:GetDmg(p1, p2, p1Bonus, p2Bound)
+	local totalDmg = 0
+	local dmgMap = {}
+
+	do
+        local normalDmg = self:GetNormalDmg(p1, p2, p1Bonus, p2Bound)
+		if normalDmg > 0 then
+			local dmg = self:GetCritDmg(normalDmg, p1, p2)
+			if dmg > 0 then
+				dmgMap[PLAYER_ATTR_TYPE.crit] = dmg
+				totalDmg = totalDmg + dmg
+			else
+                dmgMap[PLAYER_ATTR_TYPE.atk] = normalDmg
+				totalDmg = totalDmg + normalDmg
+			end
+		end
+	end
+
+	return totalDmg, dmgMap
+end
+
+function AttrConfig:GetBaseDmg(atk, def)
+    return math.ceil(atk-(atk*def)/(200000+def))
+end
+
+
+-- 物理伤害计算
+function AttrConfig:GetNormalDmg(p1, p2, p1Bonus, p2Bound)
+	p1Bonus = p1Bonus or {}
+	p2Bound = p2Bound or {}
+	
+	local atk = (p1[PLAYER_ATTR_TYPE.atk] or 0) * (1 + (p1Bonus[PLAYER_ATTR_TYPE.rate_atk] or 0))
+	local def = (p2[PLAYER_ATTR_TYPE.def] or 0)
+	local dmg = self:GetBaseDmg(atk, def)
+	if dmg <= 0 then
+		return 0
+	end
+	
+	return dmg
+end
+
+-- 暴击伤害计算
+function AttrConfig:GetCritDmg(dmg, p1, p2)
+	local critDmgCoef = 1
+    if (p1[PLAYER_ATTR_TYPE.crit] or 0) < math.random(1, 100) then
+        critDmgCoef = 1 + (p1[PLAYER_ATTR_TYPE.crit_dmg] or 0)
+    end
+    return dmg * critDmgCoef
+end
+
+--{type = 1, value = 1}
+function AttrConfig:GetPropDesc(propInfo)
+    local attrCofnig = self.parent.AttrConfig:GetAttrConfigByType(propInfo.type)
+    if attrCofnig then
+        -- effectInfo = {effectType = 5, propType = 6, base = 0.3, boost = 0.15}},
+        if attrCofnig.rate == 1 then
+            return string.format(propRateDesc, attrCofnig.name, propInfo.value * CONST.Percentage)
+        else
+            return string.format(propDesc, attrCofnig.name, NumToString(propInfo.value))
+        end
+    end
+end
+
+function AttrConfig:GetSkillDmg(skillId, lv, p2, p1Bound, p2Bound)
+    p1Bound = p1Bound or {}
+    p2Bound = p2Bound or {}
+    lv = lv or 0
+    
+    local atk = self.parent.SkillConfig:GetSkillBaseDmg(skillId, lv)
+	local def = (p2[PLAYER_ATTR_TYPE.def] or 0)
+	local dmg = self:GetBaseDmg(atk, def)
+    return dmg
+end

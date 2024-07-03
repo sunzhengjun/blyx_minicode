@@ -1,0 +1,54 @@
+local NpcManager = Component.Manager.NpcManager
+
+local Npc = Component.Entity.Npc
+local UINpc = Component.Entity.UINpc
+local RecoveryNpc = Component.Entity.RecoveryNpc
+
+function NpcManager:ctor()
+    self.npc_list = {}
+end
+
+function NpcManager:Init()
+    -- local config = G_ConfigManager.MapConfig:GetNpcConfig()
+    -- if not config then
+    --     return
+    -- end
+    -- for index, value in ipairs(config) do
+    --     local id = G_GameManager:CreateActor(value.actor_id, value.pos)
+    --     local npc
+    --     if value.type == NpcType.ui then
+    --         npc = UINpc.New(id, value)
+    --     elseif value.type == NpcType.item_recovery then
+    --         npc = RecoveryNpc.New(id, value)
+    --     else
+    --         npc = Npc.New(id, value)
+    --     end
+        
+    --     if npc then
+    --         npc:Init()
+    --         self:AddNpc(npc)
+    --     end
+    -- end
+end
+
+function NpcManager:AddNpc(npc)
+    local obj_id = npc:GetObjId()
+    if not obj_id then
+        return
+    end
+    G_EntityManager:AddEntity(npc)
+    self.npc_list[npc:GetConfig().id] = npc
+    local npc_config = npc:GetConfig()
+    local map = G_MapManager:GetMap(npc_config.map_id)
+    if map then
+        map:AddNpc(npc)
+    end
+end
+
+function NpcManager:GetNpc(npc_id)
+    return self.npc_list[npc_id or 0]
+end
+
+function NpcManager:Update(second)
+    
+end

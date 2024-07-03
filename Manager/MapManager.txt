@@ -1,0 +1,76 @@
+local MapManager = Component.Manager.MapManager
+
+local Map = Component.Base.Map
+local Portal = Component.Model.Portal
+
+function MapManager:ctor()
+    self.mapList = {}
+    self.portalList = {}
+end
+
+function MapManager:Init()
+    local map_config = G_ConfigManager.MapConfig:GetMapConfig()
+    for index, value in ipairs(map_config) do
+        local map = Map.New(value)
+        map:Init()
+        self.mapList[value.id] = map
+    end
+    
+
+    local portalConfig = G_ConfigManager.MapConfig:GetPortalConfig()
+    for i, v in ipairs(portalConfig) do
+        local area_id = G_GameManager:CreateArea(v.pos, v.size)
+        if area_id then
+            local portal = Portal.New(area_id, v.id, v)
+            portal:Init()
+            G_AreaManager:AddArea(area_id, portal)
+            self.portalList[v.id] = portal
+        end
+    end
+end
+
+function MapManager:GetMap(map_id)
+    return self.mapList[map_id]
+end
+
+function MapManager:PlayerEnterMap(map_id, player_id)
+    local map = self:GetMap(map_id)
+    map:PlayerEnter(player_id)
+end
+
+function MapManager:PlayerLeaveMap(map_id, player_id)
+    local map = self:GetMap(map_id)
+    map:PlayerLeave(player_id)
+end
+
+function MapManager:PlayerLeave(player_id)
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        self:PlayerLeaveCheckAllMap(player_id)
+        return
+    end
+
+    local map_id = player.Map:GetCurMap()
+    local map = self:GetMap(map_id)
+    if not map then
+        self:PlayerLeaveCheckAllMap(player_id)
+        return
+    end
+    
+    map:PlayerLeave(player_id)
+end
+
+function MapManager:PlayerLeaveCheckAllMap(player_id)
+    for index, value in pairs(self.mapList) do
+        value:PlayerLeave(player_id)
+    end
+end
+
+function MapManager:Update(second)
+    if not second then
+        return
+    end
+    for index, value in pairs(self.mapList) do
+        value:Update(second)
+    end
+end

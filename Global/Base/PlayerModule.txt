@@ -1,0 +1,34 @@
+local PlayerModule = Component.Base.PlayerModule
+
+function PlayerModule:ctor(player)
+    self.player = player
+    self.propMap = {}
+end
+
+function PlayerModule:Init()
+    
+end
+
+function PlayerModule:InitData()
+    
+end
+
+function PlayerModule:OnLoadDone()
+    
+end
+
+function PlayerModule:GetSaveData()
+    
+end
+
+function PlayerModule:RefreshProp()
+    
+end
+
+function PlayerModule:LeaveGame()
+    
+end
+
+function PlayerModule:GetProp()
+    return self.propMap
+end

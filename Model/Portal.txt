@@ -1,0 +1,89 @@
+local Portal = Component.Model.Portal
+
+local tipsContext = "是否花费%s*%s解锁[%s]?"
+local doneGuideTips = "#Y需要完成新手引导!"
+local mapUnlockKillBossTips = "#Y需要先击败当前地图boss才能开启下一关!"
+
+function Portal:ctor(area_id, id, config)
+    self.area_id = area_id
+    self.id = id
+    self.config = config
+end
+
+function Portal:Init()
+    local portalPos = self.config.pos
+    local pos = Vector3.New(portalPos.x, portalPos.y + 4, portalPos.z)
+    G_GameManager:PlayParticalEffect(pos, EffectId.particles_6, 1)
+end
+
+function Portal:PlayerEnter(player_id)
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    
+    if self.config.portalType == PortalType.openUI then
+        player.UIManager:OpenUI(self.config.param)
+    elseif self.config.portalType == PortalType.toOther then
+        local curGuideId = player.Guide:GetCurGuide()
+        local guideConfig = G_ConfigManager.GuideConfig:GetGuideConfigById(curGuideId)
+        if guideConfig then
+            if guideConfig.type ~= GuideType.tp then
+                self.player:SendTips(doneGuideTips)
+                return
+            end
+        end
+
+        local curUnlockMap = player.Map:GetUnlockMapId()
+        local nextMap = curUnlockMap + 1
+        local mapId = self.config.param
+        if mapId > curUnlockMap then  -- 解锁条件修改 第二处 共两处
+            if mapId ~= nextMap then
+                return
+            end
+            local mapConfig = G_ConfigManager.MapConfig:GetMapConfigById(mapId)
+            if not mapConfig then
+                return
+            end
+            local cost = mapConfig.unLockCost
+            local costConfig = G_ConfigManager.ItemConfig:GetItemConfigById(cost.id)
+            if not costConfig then
+                return
+            end
+            local tipsStr = string.format(tipsContext, costConfig.name, NumToString(cost.num), mapConfig.name)
+            local funcList = {}
+            funcList[1] = function ()
+                local bossMapId = player.Map:GetKillBossMapId()
+                if bossMapId < curUnlockMap then
+                    player:SendTips(mapUnlockKillBossTips)
+                    return
+                end
+                local enough = player:CheckItemEnough({cost}, true)
+                if not enough then
+                    return false
+                end
+                local succ = player:ConsumeItem(cost.id, cost.num)
+                if not succ then
+                    return false
+                end
+                player.Map:SetUnlockMapId(nextMap)
+                player.Map:TPToMap(mapId)
+                return true
+            end
+            player.EventManager:Trigger(PlayerEventEnum.commonTips, tipsStr, funcList)
+            return
+        end
+        player.Map:TPToMap(mapId)
+        player.GuideManager:OnGuideDone(GuideType.tp, mapId)
+    end
+end
+
+function Portal:PlayerOut(player_id)
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    if self.config.portalType == PortalType.openUI then
+        player.UIManager:CloseUI(self.config.param)
+    end
+end

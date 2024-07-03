@@ -1,0 +1,243 @@
+local DetailInfo = Component.Player.DetailInfo
+
+local stage_up_tips_min_interval = 5
+
+function DetailInfo:ctor()
+    self.last_stage_up_tips = 0
+end
+
+function DetailInfo:Init(data)
+    self:InitData(data)
+end
+
+function DetailInfo:InitData(data)
+    data = data or {}
+    self.data = data
+    if not self.data.currency then
+        self.data.currency = {}
+    end
+end
+
+function DetailInfo:GetSaveData()
+    local data = self.data
+
+    return data
+end
+
+function DetailInfo:GetExp()
+    return self.data.exp or 0
+end
+
+function DetailInfo:AddExp(num)
+    local bf = self:GetExp()
+    local new = bf + num
+    if new < 0 then
+        return false
+    end
+    self.data.exp = new
+    self:CheckLv()
+    self:RefreshProp()
+    self.player.EventManager:Trigger(PlayerEventEnum.exp_change)
+    return true
+end
+
+function DetailInfo:CheckLv()
+    local lv = self:GetLv()
+    local need = G_ConfigManager.PlayerConfig:GetExp(lv)
+    local exp = self:GetExp()
+    if exp < need then
+        local last_need = G_ConfigManager.PlayerConfig:GetExp(lv-1)
+        if last_need and exp < last_need then
+            self:CheckLvAndStage()
+        end
+        return
+    end
+    local stage = self:GetStage()
+    local stage_config = G_ConfigManager.PlayerConfig:GetStageConfig(stage)
+    if not stage_config then
+        return
+    end
+    if lv >= stage_config.max_lv then   -- 需要突破
+        self:SendStageUpTips()
+        return
+    end
+    local next_lv = lv + 1
+    self:SetLv(next_lv)
+    self:CheckLv()
+end
+
+function DetailInfo:CheckLvAndStage()
+    local lv_config = G_ConfigManager.PlayerConfig:GetExpStage(self:GetExp())
+    if not lv_config then
+        return
+    end
+    self:SetLv(lv_config.lv)
+    self:SetStage(lv_config.stage)
+end
+
+function DetailInfo:GetLv()
+    return self.data.lv or 1
+end
+
+function DetailInfo:SetLv(lv)
+    self.data.lv = lv
+    self.player:FillHp()
+    self.player.EventManager:Trigger(PlayerEventEnum.lv_change)
+    self:PlayLvUpEffect()
+end
+
+function DetailInfo:GetStage()
+    return self.data.stage or 1
+end
+
+function DetailInfo:SetStage(stage)
+    self.data.stage = stage
+    self:SetMaxStage(stage)
+    self:CheckLv()
+    self:RefreshProp()
+    self.player:FillHp()
+    self.player.EventManager:Trigger(PlayerEventEnum.stage_change)
+end
+
+function DetailInfo:SetMaxStage(stage)
+    local max_stage = self:GetMaxStage()
+    if stage <= max_stage then
+        return
+    end
+    self.data.max_stage = stage
+end
+
+function DetailInfo:GetMaxStage()
+    return self.data.max_stage or 0
+end
+
+function DetailInfo:GetTreeLv()
+    return self.data.tree_lv or 1
+end
+
+function DetailInfo:SetTreeLv(lv)
+    self.data.tree_lv = lv
+    self.player.EventManager:Trigger(PlayerEventEnum.tree_lv_change)
+end
+
+function DetailInfo:GetCurrency(id)
+    return self.data.currency[id] or 0
+end
+
+function DetailInfo:AddCurrency(id, num)
+    local bf = self:GetCurrency(id)
+    local new = bf + num
+    self.data.currency[id] = new
+    self.player.EventManager:Trigger(PlayerEventEnum.currency_change, id, num)
+end
+
+function DetailInfo:GetTreeAutoInfo()
+    return self.data.tree_auto_info
+end
+
+function DetailInfo:SetTreeAutoInfo(info)
+    self.data.tree_auto_info = info
+end
+
+function DetailInfo:AddMoney1(id, num, backpack_idx)
+    local item_config = G_ConfigManager.ItemConfig:GetItemConfigByPlugin(id)
+    if not item_config then
+        return
+    end
+    local item = self.player:GetBackpackSlotItem(backpack_idx)
+    if not item then
+        return
+    end
+    
+    if item.id ~= id then
+        return
+    end
+    if item.num <= 0 then
+       return
+    end
+    local succ = self.player:RemoveBackPackItemBySlot(backpack_idx)
+    -- local res, ret = Backpack:removeGridItem(self.player:GetPlayerId(), backpack_idx, 1)
+    if not succ then
+        return
+    end
+    self:AddCurrency(1, 1)
+end
+
+function DetailInfo:PlayLvUpEffect()
+    Player:notifyGameInfo2Self(self.player:GetPlayerId(), TIPS_CONST.LvUpTipsStr)
+    Actor:playBodyEffectById(self.player:GetPlayerId(), 1005, 2)
+    Actor:playBodyEffectById(self.player:GetPlayerId(), 1044, 3)
+    Actor:playBodyEffectById(self.player:GetPlayerId(), 1700, 1)
+end
+
+function DetailInfo:SendStageUpTips()
+    local time = os.time()
+    if time - self.last_stage_up_tips <= stage_up_tips_min_interval then
+        return
+    end
+    self.last_stage_up_tips = time
+    self.player:SendTips(TIPS_CONST.MaxExpTipsStr)
+end
+
+function DetailInfo:SendRookieGift()
+    if self.data.rookie_gift then
+        return
+    end
+    self.data.rookie_gift = 1
+    for index, value in ipairs(CONST.RookieGift) do
+        self.player:AddItem(value)
+    end
+end
+
+function DetailInfo:GetIdlePoolRwdInfo()
+    self:CheckIdlePoolRwdTime()
+    return self.data.idle_pool
+end
+
+function DetailInfo:CheckIdlePoolRwdTime()
+    local time = os.time()
+    if not self.data.idle_pool then
+        self:RefreshIdlePoolRwdTime()
+        return
+    end
+    local day_num = GetDateNum(time, self.data.idle_pool.last_check_time)
+    if day_num ~= 0 then
+        self:RefreshIdlePoolRwdTime()
+    end
+end
+
+function DetailInfo:RefreshIdlePoolRwdTime()
+    local time = os.time()
+    self.data.idle_pool = {
+        money1_times = 0,
+        exp_times = 0,
+        last_check_time = time
+    }
+end
+
+function DetailInfo:SendIdleRwd()
+    local idle_info = self:GetIdlePoolRwdInfo()
+    if not idle_info then
+        return
+    end
+    
+    local rand = math.random(1, CONST.NormalMaxWeight)
+    if rand < CONST.IdlePoolMoney1Weight and idle_info.money1_times < CONST.IdlePoolMoney1MaxTimes then
+        local item = {id = CONST.Money1Id, num = 1}
+        self.player:AddItem(item)
+        self.player.EventManager:Trigger(PlayerEventEnum.item_notify, item)
+        idle_info.money1_times = idle_info.money1_times + 1
+        return true
+    end
+
+    if rand < CONST.IdlePoolExpWeight and idle_info.exp_times < CONST.IdlePoolExpMaxTimes then
+        local exp = self:GetExp()
+        local num = Clamp(math.ceil(exp * CONST.IdlePoolExpRate), CONST.IdlePoolMaxExp, 1)
+        local item = {id = CONST.ExpItem.id, num = num}
+        self.player:AddItem(item)
+        self.player.EventManager:Trigger(PlayerEventEnum.item_notify, item)
+        idle_info.exp_times = idle_info.exp_times + 1
+        return true
+    end
+    
+end

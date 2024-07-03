@@ -1,0 +1,13 @@
+local InputManager = Component.Player.InputManager
+
+function InputManager:ctor(player)
+    self.player = player
+end
+
+function InputManager:Init()
+    
+end
+
+function InputManager:OnKeyDown(key)
+    self.player.UIManager:OnKeyDown(key)
+end

@@ -1,0 +1,96 @@
+local DailyTask = Component.Player.DailyTask
+
+function DailyTask:ctor()
+    
+end
+
+function DailyTask:Init(data)
+    self:InitData(data)
+    self.player.EventManager:SubscribeEvent(PlayerEventEnum.online_second_5, {owner = self, func = self.Online5Second})
+end
+
+function DailyTask:InitData(data)
+    data = data or {}
+    self.data = data
+    self.last_day_time = data.last_day_time or 0
+    self.task_list = data.task_list
+    self:CheckDayRefresh()
+end
+
+function DailyTask:GetSaveData()
+    local data = self.data
+    data.last_day_time = self.last_day_time
+    data.task_list = self.task_list
+    return data
+end
+
+function DailyTask:OnLoadDone()
+    -- self:CheckDailyReddot()
+    -- self:CheckWeekReddot()
+end
+
+function DailyTask:Online5Second()
+    self:CheckTaskProgress(DailyTaskType.online, 5)
+end
+
+function DailyTask:CheckDayRefresh()
+    local time = os.time()
+    local day_num = GetDateNum(self.last_day_time, time)
+    if day_num == 0 then
+        return
+    end
+    self:RefreshDayInfo()
+end
+
+function DailyTask:RefreshDayInfo()
+    local time = os.time()
+    self.last_day_time = time
+    self.task_list = G_ConfigManager.WelfConfig:GetNewDailyTaskConfig()
+end
+
+function DailyTask:GetTaskInfoById(id)
+    for index, value in ipairs(self.task_list) do
+        if value.id == id then
+            return value
+        end
+    end
+end
+
+function DailyTask:GetTaskInfo()
+    self:CheckDayRefresh()
+    return self.task_list
+end
+
+function DailyTask:AddTaskProgress(id, times)
+    for index, value in ipairs(self.task_list) do
+        if value.id == id then
+            local new_progress = self.task_list[index].progress + times
+            self.task_list[index].progress = new_progress
+        end
+    end
+end
+
+function DailyTask:CheckTaskProgress(type, times, params)
+    for index, value in ipairs(self.task_list) do
+        if value.state ~= DailyTaskState.done then
+            local config = G_ConfigManager.WelfConfig:GetDailyTaskConfigById(value.id)
+            if config then
+                if config.type == type then
+                    if type == DailyTaskType.online then
+                        self:AddTaskProgress(value.id, times)
+                    elseif type == DailyTaskType.any_kill then
+                        self:AddTaskProgress(value.id, times)
+                    end
+                end
+            end
+        end
+    end
+end
+
+function DailyTask:ChangeTaskState(id, state)
+    local info = self:GetTaskInfoById(id)
+    if not info then
+        return
+    end
+    info.state = state
+end

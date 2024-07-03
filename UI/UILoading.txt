@@ -1,0 +1,71 @@
+local uiid = "7384381460063186860"
+
+local begin_button = "7384381460063186860_5"
+
+local slider_progress = {
+    root = "7384381460063186860_3",
+    fill = "7384381460063186860_4",
+    size = {
+        w = 1207,
+        h = 27
+    }
+}
+
+local click_start = {}
+
+local function OnUIOpen(e)
+    
+end
+
+local function OnClickBeginButton(player_id)
+    if click_start[player_id] then
+        return
+    end
+    click_start[player_id] = 1
+    MINI_HideElement(player_id, uiid, begin_button)
+    
+    local ret, res = pcall(function ()
+        G_GameManager:LoadPlayer(player_id)
+    end)
+    if not ret then
+        G_LogManager:error(res)
+        return
+    end
+    threadpool:work(function ()
+        MINI_SetSize(player_id, uiid, slider_progress.fill, 0, slider_progress.size.h)
+        MINI_ShowElement(player_id, uiid, slider_progress.root)
+        for i = 1, 60, 1 do
+            G_GameManager:WaitForSecond(CONST.Ticket)
+            if i > 10 then
+                local player = G_PlayerManager:GetPlayer(player_id)
+                if player then
+                    MINI_SmoothScaleTo(player_id, uiid, slider_progress.fill, 0.2, slider_progress.size.w, slider_progress.size.h)
+                    G_GameManager:WaitForSecond(0.4)
+                    break
+                end
+            end
+            MINI_SmoothScaleTo(player_id, uiid, slider_progress.fill, 0.2, slider_progress.size.w * i/60, slider_progress.size.h)
+        end
+        MINI_HideElement(player_id, uiid, slider_progress.root)
+        MINI_HideUIView(player_id, uiid)
+        click_start[player_id] = nil
+    end)
+end
+
+local function OnButtonClick(e)
+    -- local player = G_PlayerManager:GetPlayer(e.eventobjid)
+    -- if player then
+    --     player.UIManager:OnUIButtonClick(panel_type, e)
+    -- end
+    OnClickBeginButton(e.eventobjid)
+end
+
+-- local function OnLostFocus(e)
+--     local player = G_PlayerManager:GetPlayer(e.eventobjid)
+--     if player then
+--         player.UIManager:OnLostFocus(panel_type, e)
+--     end
+-- end
+
+ScriptSupportEvent:registerEvent("UI.Show", OnUIOpen)
+ScriptSupportEvent:registerEvent("UI.Button.Click", OnButtonClick)

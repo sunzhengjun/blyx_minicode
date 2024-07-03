@@ -1,0 +1,86 @@
+local BossRespawn = Component.Model.BossRespawn
+
+
+function BossRespawn:ctor(manager, config)
+    local time = os.time()
+    self.next_refresh_time = time + config.cd
+end
+
+
+function BossRespawn:Init()
+    local monster_config = G_ConfigManager.MonsterConfig:GetMonsterConfigById(self.config.monster_id)
+    self.monster_name = ""
+    if monster_config then
+        self.monster_name = string.format("#Y[BOSS]#R%s", monster_config.name)
+    end
+    self:RefreshState()
+end
+
+function BossRespawn:RefreshState()
+    self:RefreshGraphicsText()
+end
+
+function BossRespawn:RefreshGraphicsText()
+    
+end
+
+function BossRespawn:CreateMonster()
+    self.monster_num = nil
+    local cur_num = self:GetMonsterNum()
+    for i = cur_num + 1, self.config.num, 1 do
+        local rand_pos = self:GetRandomPos()
+        local monster = G_MonsterManager:CreateMonster(self, rand_pos, self.config.monster_id)
+        if monster then
+            table.insert(self.monster_list, monster)
+        end
+    end
+    self.monster_num = #self.monster_list
+    self.next_refresh_time = 0
+    self:RefreshState()
+end
+
+function BossRespawn:CheckCreateMonster()
+    if not self.monster_num then
+        return
+    end
+    if self.monster_num >= self.config.num then
+        return
+    end
+    self:CreateMonster()
+end
+
+function BossRespawn:GetMonsterNum()
+    return #self.monster_list
+end
+
+function BossRespawn:MonsterDie(monster)
+    for i = 1, #self.monster_list, 1 do
+        local value = self.monster_list[i]
+        if value == monster then
+            table.remove(self.monster_list, i)
+            break
+        end
+    end
+
+    if next(self.monster_list) then
+        return
+    end
+    -- 刷怪时间
+    local time = os.time()
+    self.next_refresh_time = time + self.config.cd
+    self:RefreshState()
+end
+
+function BossRespawn:Update(second)
+    if not second then
+        return
+    end
+    self:CheckCreateMonster()
+    self:RefreshState()
+    local time = os.time()
+    if self.next_refresh_time <= 0 or time < self.next_refresh_time then
+        return
+    end
+
+    self:CreateMonster()
+end

@@ -1,0 +1,41 @@
+local EventManager = Component.Player.EventManager
+
+function EventManager:ctor(player)
+    self.player = player
+    self.event_list = {}
+    for key, value in pairs(PlayerEventEnum) do
+        self.event_list[value] = {}
+    end
+end
+
+function EventManager:Init()
+    
+end
+
+function EventManager:Trigger(enum, ...)
+    for index, value in ipairs(self.event_list[enum]) do
+        local ret, res = pcall(value.func, value.owner, ...)
+        if not ret then
+            G_LogManager:error(res)
+        end
+    end
+end
+
+function EventManager:SubscribeEvent(enum, event)
+    for index, value in ipairs(self.event_list[enum]) do
+        if value.owner == event.owner then
+            return
+        end
+    end
+    table.insert(self.event_list[enum], event)
+end
+
+function EventManager:UnsubscribeEvent(enum, model)
+    for i = 1, #self.event_list[enum], 1 do
+        local value = self.event_list[enum][i]
+        if value.owner == model then
+            table.remove(self.event_list[enum], i)
+            break
+        end
+    end
+end

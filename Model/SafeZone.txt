@@ -1,0 +1,40 @@
+local SafeZone = Component.Model.SafeZone
+
+local enter_safe_zone_tips_str = "#G已进入安全区!"
+local leave_safe_zone_tips_str = "#R已离开安全区,小心其他魂师的攻击!"
+
+function SafeZone:ctor(area_id, config)
+    self.area_id = area_id
+    self.config = config
+end
+
+function SafeZone:Init()
+    
+end
+
+function SafeZone:PlayerEnter(player_id)
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    player:SetActionAttrState(PlayerActionType.be_attacked, false)
+    player:SetActionAttrState(PlayerActionType.attack, false)
+    if self.config.recover then
+        player:FullnessHP()
+    end
+    player:SendTips(enter_safe_zone_tips_str)
+end
+
+function SafeZone:PlayerOut(player_id)
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    local cur_map = player.Map:GetCurMap()
+    if cur_map ~= self.config.map_id then
+        return
+    end
+    player:SetActionAttrState(PlayerActionType.be_attacked, true)
+    player:SetActionAttrState(PlayerActionType.attack, true)
+    player:SendTips(leave_safe_zone_tips_str)
+end

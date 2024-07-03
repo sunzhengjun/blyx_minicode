@@ -1,0 +1,37 @@
+local EventBlockManager = Component.Manager.EventBlockManager
+
+function EventBlockManager:ctor()
+    self.block_map = {}
+end
+
+function EventBlockManager:Init()
+    
+end
+
+function EventBlockManager:AddBlock(block)
+    local key = tostring(block:GetPos())
+    self.block_map[key] = block
+end
+
+function EventBlockManager:RemoveBlock(block)
+    local key = tostring(block:GetPos())
+    self.block_map[key] = nil
+end
+
+function EventBlockManager:GetBlock(pos)
+    local key = tostring(pos)
+    local block = self.block_map[key]
+    return block
+end
+
+function EventBlockManager:OnPlayerClick(player_id, pos)
+    local block = self:GetBlock(pos)
+    if not block then
+        return
+    end
+    local player = G_PlayerManager:GetPlayer(player_id)
+    if not player then
+        return
+    end
+    block:OnPlayerClick(player)
+end

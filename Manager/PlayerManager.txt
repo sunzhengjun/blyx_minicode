@@ -1,0 +1,115 @@
+local PlayerManager = Component.Manager.PlayerManager
+local Player1 = Component.Entity.Player
+
+function PlayerManager:ctor()
+    self.player_list = {}
+end
+
+function PlayerManager:Init()
+    
+end
+
+function PlayerManager:GetPlayer(id)
+    return self.player_list[id or 0]
+end
+
+function PlayerManager:AddPlayer(id, data)
+    local res, ret = pcall(function ()
+        local player = Player1.New(id)
+        player:Init(data)
+        self.player_list[id] = player
+        self:PlayerOnline(id)
+        G_EntityManager:AddEntity(player)
+        player:LoadDone()
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+function PlayerManager:PlayerOnline(player_id)
+    
+end
+
+function PlayerManager:PlayerLeave(id)
+    local player = self:GetPlayer(id)
+    if not player then
+        return
+    end
+    player:LeaveGame()
+    self:RemovePlayer(id)
+end
+
+function PlayerManager:RemovePlayer(id)
+    self.player_list[id or 0] = nil
+    G_EntityManager:RemoveEntity(id)
+
+    if not next(self.player_list) then
+        G_GameManager:OnAllPlayerLeave()
+    end
+end
+
+function PlayerManager:GetAllPlayer()
+    return self.player_list
+end
+
+function PlayerManager:Update(second)
+    if second then
+        local leave_player = {}
+        for player_id, value in pairs(self.player_list) do
+            local result,name = Player:getNickname(player_id)
+            if not name then
+                table.insert(leave_player, player_id)
+            end
+        end
+        for index, player_id in ipairs(leave_player) do
+            G_GameManager:PlayerLeave(player_id)
+        end
+    end
+    
+    for player_id, value in pairs(self.player_list) do
+        if value:GetDoneSign() then
+            value:Update(second)
+        end
+    end
+end
+
+function PlayerManager:PlayerDataUpdate(second)
+    if not second then
+        return
+    end
+    for player_id, value in pairs(self.player_list) do
+        if value:GetDoneSign() then
+            value.DataManager:Update()
+        end
+    end
+end
+
+function PlayerManager:PlayerUIUpdate(second)
+    local res, ret = pcall(function ()
+        for player_id, value in pairs(self.player_list) do
+            if value:GetDoneSign() then
+                value.UIManager:Update(second)
+            end
+        end
+    end)
+    if not res then
+        error(ret, 2)
+    end
+    assert(res, ret)
+end
+
+-- function PlayerManager:PlayerCharmUpdate(second)
+--     local res, ret = pcall(function ()
+--         for player_id, value in pairs(self.player_list) do
+--             if value:GetDoneSign() then
+--                 value.CharmManager:Update(second)
+--             end
+--         end
+--     end)
+--     if not res then
+--         error(ret, 2)
+--     end
+--     assert(res, ret)
+-- end

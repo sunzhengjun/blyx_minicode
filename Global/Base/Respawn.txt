@@ -1,0 +1,49 @@
+local Respawn = Component.Base.Respawn
+
+function Respawn:ctor(manager, config)
+    self.manager = manager
+    self.config = config
+    self.monster_list = {}
+end
+
+
+function Respawn:Init()
+
+end
+
+function Respawn:RefreshGraphicsText()
+    
+end
+
+function Respawn:GetConfig()
+    return self.config
+end
+
+function Respawn:GetMapId()
+    return self:GetConfig().mapId
+end
+
+function Respawn:GetRandomPos()
+    local point = self.config.pos
+    local offset = self.config.offset
+    local rand_x = math.random(point.x - offset.x, point.x + offset.x)
+    local rand_y = math.random(point.y - offset.y, point.y + offset.y)
+    local rand_z = math.random(point.z - offset.z, point.z + offset.z)
+
+    return Vector3.New(rand_x, rand_y, rand_z)
+end
+
+function Respawn:CreateMonster()
+end
+
+function Respawn:MonsterDie(monster)
+    
+end
+
+function Respawn:Update(second)
+    
+end
+
+function Respawn:GetStateStr()
+    return STR_CONST.Empty
+end

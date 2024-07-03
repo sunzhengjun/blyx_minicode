@@ -1,0 +1,111 @@
+local EntityManager = Component.Manager.EntityManager
+
+function EntityManager:ctor()
+    self.all_entity = {}
+end
+
+function EntityManager:Init()
+    
+end
+
+function EntityManager:OnPlayerClickActor(player_id, objid)
+    local entity = self.all_entity[objid]
+    if not entity then
+        return
+    end
+
+    entity:OnPlayerClick(player_id)
+end
+
+function EntityManager:RemoveEntity(id)
+    self.all_entity[id] = nil
+end
+
+function EntityManager:AddEntity(entity)
+    local id = entity:GetObjId()
+    self.all_entity[id] = entity
+end
+
+function EntityManager:DestroyEntity(entity)
+    local id = entity:GetObjId()
+    World:despawnCreature(id)
+    self:RemoveEntity(id)
+end
+
+function EntityManager:GetAllEntity()
+    return self.all_entity
+end
+
+function EntityManager:GetEntity(id)
+    return self.all_entity[id]
+end
+
+function EntityManager:OnActorDie(id, killer_id, actor_id)
+    local entity = self:GetEntity(id)
+    if not entity then
+        return
+    end
+    self:RemoveEntity(id)
+    entity:Die(killer_id)
+    local player = G_PlayerManager:GetPlayer(killer_id)
+    if player then  -- 玩家击杀
+        player:KillMonster(entity:GetConfigId())
+        player.EventManager:Trigger(PlayerEventEnum.killTarget, id)
+    end
+end
+
+function EntityManager:OnActorChangeMotion(id, motion)
+    local entity = self:GetEntity(id)
+    if not entity then
+        return
+    end
+    entity:OnActorChangeMotion(motion)
+end
+
+function EntityManager:OnActorCreate(id)
+    local entity = self:GetEntity(id)
+    if not entity then
+        return
+    end
+    entity:OnActorCreate()
+end
+
+function EntityManager:OnActorAttack(id, target_id)
+    local entity = self:GetEntity(id)
+    if not entity then
+        return
+    end
+    entity:OnActorAttack(target_id)
+end
+
+function EntityManager:OnActorBeHurt(id, attack_id, dmg)
+    local entity = self:GetEntity(id)
+    if not entity then
+        return
+    end
+    entity:OnActorBeHurt(attack_id, dmg)
+end
+
+function EntityManager:OnActorCollide(id, target_id)
+    local entity = self:GetEntity(id)
+    if not entity then
+        return
+    end
+    entity:OnActorCollide(target_id)
+end
+
+function EntityManager:OnActorBeat(id, target_id)
+    local entity = self:GetEntity(id)
+    if not entity then
+        return
+    end
+    entity:OnActorBeat(target_id)
+end
+
+function EntityManager:OnActorAttackHit(id, target_id)
+    local entity = self:GetEntity(id)
+    if not entity then
+        return
+    end
+    entity:OnAttackHit(target_id)
+end

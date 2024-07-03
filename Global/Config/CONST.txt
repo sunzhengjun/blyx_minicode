@@ -1,0 +1,157 @@
+TIME_CONST = {
+    day = 86400,
+    hour = 3600,
+    min = 60,
+    day_hour = 24,
+    FrameTime = 0.02
+}
+
+COLOR = {
+    White = "0xFFFFFF",
+    Grey = "0x4E5251",
+    LightGrey = "0x8F9190",
+    Red = "0xFF0000",
+    Black = "0x000000",
+    Green = "0x00FF00",
+}
+
+CONST = {
+    CurGameVer = 0.01,
+    MapId = 3519023686522,
+    CurDataVer = 1,
+    NormalMaxWeight = 10000,    -- 默认最大权重
+    Percentage = 100,
+    GodTreeEquipMinIntervalLv = -5,  -- 砍树区间等级 当前等级-5
+    GodTreeEquipMinLv = 1,  -- 砍树装备最小等级
+    GodTreeEquipMaxLv = 190,  -- 砍树装备最大等级
+    PlayerDataCacheMinTimeInterval = 10,    -- 数据缓存最小时间间隔
+    PlayerDataCacheMaxTimeInterval = 30,   -- 数据缓存最大时间间隔
+    PlayerDataSaveMinTimeInterval = 180,    -- 数据保存最小时间间隔
+    PlayerDataSaveMaxTimeInterval = 300,    -- 数据保存最大时间间隔
+    PlayerDataDBName = "T1playersData",
+    CollectDBName = "collectData",
+    UpArrowImg = [[8_1862954560_1706781184]],
+    DownArrowImg = [[8_1862954560_1706849005]],
+    Ticket = 0.05,
+    FastSlotBeginIdx = 1000,
+    MainCityMapId = 1,
+    RankMinInterval = 120,
+    Money1Id = 1,
+    SystemDefRate = 1/10000000000000,
+    RideActorId = 3406,
+    PlayerTitleContextSize = 14,
+    PlayerTitleStepHeight = 3,
+    PlayerTitleBaseHeight = 13,
+    PlayerStageTitleNumber = 1,  -- 文字板编号
+    PlayerHerbsPointsTitleNumber = 2,  -- 文字板编号
+
+    RookieGift = {{id = 1, num = 50}, {id = 5001, num = 1}},
+    LoginLookAtPos = {x = 32, y = 46, z = -76},
+    ExpItemId = 999,
+
+    IdlePoolCheckTime = 5,  -- 挂机池间隔
+    IdlePoolMoney1MaxTimes = 2000,  -- 挂机池桃子最大次数
+    IdlePoolExpMaxTimes = 8000,  -- 挂机池修为最大次数
+    IdlePoolMaxExp = 10000000, -- 挂机池单次最大修为
+    IdlePoolExpRate = 0.0002, -- 挂机池单次自身修为比例
+    IdlePoolMoney1Weight = 4000, -- 挂机池桃子权重
+    IdlePoolExpWeight = 10000, -- 挂机池修为权重
+    IdlePoolRecoverHpRate = 0.05, -- 挂机池每秒恢复血量比例
+    ProjectileNoramlSurvivalTime = 5, -- 投掷物默认生存时间
+    SecondButtonMaxTriggerTimes = 3,    -- 每秒最大点击按钮次数
+    MonsterClickCollideSaveDiffTimes = 3,    -- 怪物保护 碰撞和点击
+    MonsterSaveMinInterval = 30,    -- 怪物假死保护间隔
+    CreateRingOffset = {x = 0, y = 4, z = 0},
+    CreatePluginMaxNum = 5, -- 同时最多创建掉落物的个数
+    MonthVipTime = 30 * TIME_CONST.day,
+    
+    monthDayNum = 30, -- 月卡时间
+    weekDayNum = 7, -- 周卡时间
+}
+
+TIPS_CONST = {
+    NotEnoughTipsStr = "#R[#Y%s#R]不足!需要#Y%s#R拥有#Y%s",
+    LvNotEnoughTipsStr = "#R境界不足!",
+    NotMoreTipsStr = "#B没有更多了",
+    NotRwdTipsStr = "#R奖励不存在!",
+    SuccTipsStr = "#G成功!",
+    FailTipsStr = "#R失败!",
+    StrengthenSuccTipsStr = "#G强化成功!",
+    StrengthenFailTipsStr = "#R强化失败!",
+    LockQuickMovementMapTipsStr = "#R此地图禁用快速传送!",
+    AnyPlusAnyTipsStr = "#Y[%s]#G+%s",
+    LvUpTipsStr = "#R等#B级#G提#Y升!",
+    MaxExpTipsStr = "#Y魂力已满,需要突破当前等阶后继续吸收魂环!",
+    PowChangeAddTipsStr = "#G↑战力#Y+%s!",
+    PowChangeReduceTipsStr = "#R↓战力#Y-%s!",
+    PropChangeAddTipsStr = "#G↑%s#Y+%s",
+    PropChangeReduceTipsStr = "#R↓%s#Y-%s",
+    DieExpReduceTipsStr = "#R死亡扣除#Y[%s]#R点魂力!",
+    StageUpStepTipsStr = "#Y[%s]#B正在检验第%s魂环",
+    StageUpDoneSuccTipsStr = "#Y[%s]#G受到天使神的眷顾,成功突破到#Y[%s]#G,并在铁匠台附近掉落大量千锤铁!",
+    StageUpDoneFailTipsStr = "#Y[%s]#R因实力不足,尝试突破到#Y[%s]#R时遭到魂环反噬,突破失败!",
+    EnterIdlePoolTipsStr = "#G你已进入挂机区域,可获得挂机奖励并缓慢恢复血量!",
+    ExitIdlePoolTipsStr = "#G你已退出挂机区域!",
+    SkillCDTipStr = "#R魂技冷却还剩%s秒!",
+    SkillNotLearnedTipsStr = "#G该魂技尚未领悟!",
+    DmgTipspStr = "%s[%s]:%s",
+    UnLockSkillTipsStr = "#G领悟了魂技[#Y%s#G]!",
+    BagNotEnoughTipsStr = "#R背包放不下了,先清理背包!",
+    ItemCannotRecoveryTipsStr = "#Y该道具无法回收",
+    StoveLockTipsStr = "#Y该鼎未解锁!",
+    UnlockTips = "#Y暂未解锁",
+    SkillStageUpSuccTipsStr = "#G突破成功!",
+    SkillStageUpFailTipsStr = "#R突破失败!",
+    GetItemTips = "#G获得[#Y%s#G]#Y*%s",
+    RwdAlreadyReceiveTips = "#Y奖励已领取",
+}
+
+STR_CONST = {
+    Lv1Str = "%s级",
+    Lv2Str = "等级:%s",
+    Lv3Str = "lv.%s",
+    BossRespawnExistState = "存活",
+    BossRespawnNotExistState = "%02d:%02d秒后刷新",
+    BlockRespawnState = "手动刷新",
+    Empty = "",
+    PlusAny = "+%s",
+    MultAny = "x%s",
+    AnyMultAny = "%s*%s",
+    SubAny = "-%s",
+    PercentageStr = "%s%%",
+    PropStr = "[%s]:%s",
+    PropTitleStr = "[%s]:",
+    StageEquipNameStr = "[%s]%s",
+    ContrastStr = "%s/%s",
+    SkillDescStr = "%s\n[品质]:%s",
+    OnlySecondTimeStr = "00:%02d",
+}
+
+UIPanel = {
+    Main = "Main",
+    Auto = "Auto",
+    GM = "GM",
+    Skill = "Skill",
+    ItemTips = "ItemTips",
+    Charm = "Charm",
+    Bag = "Bag",
+    ForgeCharm = "ForgeCharm",
+    TP = "TP",
+    Pass = "Pass",
+    Tips = "Tips",
+    AFK = "AFK",
+    BossBox = "BossBox",
+    Guide = "Guide",
+    Rank = "Rank",
+    Shop = "Shop",
+    Achievement = "Achievement",
+    PromotionLevel = "PromotionLevel",
+    Collect = "Collect",
+}
+
+PropBuffTex = {
+    [102] = "8_1426845612_1717667914", -- 伤害
+    [104] = "8_1426845612_1717667883", -- 灵石
+    [105] = "8_1426845612_1717667876", -- 灵气
+    [107] = "8_1426845612_1719563348", -- 经验
+}

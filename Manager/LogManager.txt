@@ -1,0 +1,23 @@
+local LogManager = Component.Manager.LogManager
+
+function LogManager:ctor()
+    
+end
+
+function LogManager:Init()
+    
+end
+
+function LogManager:print(info)
+    print(info)
+end
+
+function LogManager:error(info)
+    print(info)
+    if info then
+        local str = tostring(info)
+        if str then
+            Player:StandReportEvent(1445471098, str)
+        end
+    end
+end

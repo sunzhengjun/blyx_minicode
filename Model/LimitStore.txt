@@ -1,0 +1,102 @@
+local LimitStore = Component.Model.LimitStore
+
+function LimitStore:ctor()
+    
+end
+
+function LimitStore:Init(data)
+    self:InitData(data)
+end
+
+function LimitStore:InitData(data)
+    data = data or {}
+    self.buy_info = {}
+    for index, value in pairs(LimitBuyType) do
+        self.buy_info[value] = {
+            last_time = os.time(),
+            buy_times = {}
+        }
+    end
+
+    for buy_type, value in pairs(data.buy_info or {}) do
+        local key = tonumber(buy_type)
+        if key then
+            self.buy_info[key].last_time = value.last_time
+            for index, vv in ipairs(value.times_info) do
+                if not self.buy_info[key].buy_times[vv.goods_id] then
+                    self.buy_info[key].buy_times[vv.goods_id] = {}
+                end
+                self.buy_info[key].buy_times[vv.goods_id][vv.tab] = vv.times
+            end
+        end
+    end
+
+    for index, value in pairs(LimitBuyType) do
+        self:CheckRefreshTime(value)
+    end
+end
+
+function LimitStore:GetSaveData()
+    local buy_info = {}
+    for type, value in pairs(self.buy_info) do
+        buy_info[type] = {
+            last_time = value.last_time,
+            times_info = {}
+        }
+        for goods_id, vv in pairs(value.buy_times) do
+            for tab, times in pairs(vv) do
+                table.insert(buy_info[type].times_info, {goods_id = goods_id, tab = tab, times = times})
+            end
+        end
+    end
+    local data = {
+        buy_info = buy_info
+    }
+    return data
+end
+
+function LimitStore:CheckRefreshTime(limitType)
+    local time = os.time()
+    local last_time = self.buy_info[limitType].last_time
+    local refresh = false
+    if limitType == LimitBuyType.day then
+        local day_num = GetDateNum(last_time, time)
+        if day_num ~= 0 then
+            refresh = true
+        end
+    elseif limitType == LimitBuyType.week then
+        local week_day_time = GetMondayTime(time)
+        local week_day_time_2 = GetMondayTime(last_time)
+        if week_day_time ~= week_day_time_2 then
+            refresh = true
+        end
+    elseif limitType == LimitBuyType.month then
+        local mon_day_time = GetFirstDayOfMonth(time)
+        local mon_day_time_2 = GetFirstDayOfMonth(last_time)
+        if mon_day_time ~= mon_day_time_2 then
+            refresh = true
+        end
+    end
+
+    if refresh then
+        self.buy_info[limitType] = {
+            last_time = os.time(),
+            buy_times = {}
+        }
+    end
+end
+
+function LimitStore:GetGoodsBuyTimes(limitType, tab, goods_id)
+    self:CheckRefreshTime(limitType)
+    return (self.buy_info[limitType].buy_times[goods_id] or {})[tab] or 0
+end
+
+function LimitStore:AddGoodsBuyTimes(limitType, tab, goods_id, times)
+    local bf = self:GetGoodsBuyTimes(limitType, tab, goods_id)
+    local new = bf + times
+
+    if not self.buy_info[limitType].buy_times[goods_id] then
+        self.buy_info[limitType].buy_times[goods_id] = {}
+    end
+    self.buy_info[limitType].buy_times[goods_id][tab] = new
+end

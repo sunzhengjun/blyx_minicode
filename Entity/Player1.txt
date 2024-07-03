@@ -1,0 +1,1041 @@
+local Player1 = Component.Entity.Player
+
+local UIManager = Component.Player.UIManager
+local EventManager = Component.Player.EventManager
+local DataManager = Component.Player.DataManager
+local DetailInfo = Component.Player.DetailInfo
+local InputManager = Component.Player.InputManager
+local Online = Component.Player.Online
+local CharmManager = Component.Player.CharmManager
+local Buff = Component.Player.Buff
+local Stone = Component.Player.Stone
+local Charm = Component.Player.Charm
+local Skill = Component.Player.Skill
+local Bag = Component.Player.Bag
+local Map = Component.Player.Map
+local Pass = Component.Player.Pass
+local Recharge = Component.Player.Recharge
+local AFKManager = Component.Player.AFKManager
+local AFK = Component.Player.AFK
+local Guide = Component.Player.Guide
+local GuideManager = Component.Player.GuideManager
+local Reddot = Component.Player.Reddot
+local Shop = Component.Player.Shop
+
+local Achieve = Component.Player.Achieve
+local PromotionMap = Component.Player.PromotionMap
+-- local Dungeon = Component.Player.Dungeon
+
+local Module = {
+    InputManager = InputManager,
+    UIManager = UIManager,
+    EventManager = EventManager,
+    DataManager = DataManager,
+    -- CharmManager = CharmManager,
+    -- DetailInfo = DetailInfo,
+    -- Online = Online,
+    -- Buff = Buff,
+    -- Stone = Stone,
+    -- Charm = Charm,
+    -- Skill = Skill,
+    -- Bag = Bag,
+    -- Map = Map,
+    -- Pass = Pass,
+    -- Recharge = Recharge,
+    -- AFKManager = AFKManager,
+    -- AFK = AFK,
+    -- Guide = Guide,
+    -- GuideManager = GuideManager,
+    -- Achieve = Achieve,
+    -- Reddot = Reddot,
+    -- Shop = Shop,
+    -- PromotionMap = PromotionMap,
+}
+
+local ActivitiesModule = {
+    
+}
+
+local propModule = {
+    "DetailInfo", "Buff", "Charm", "Skill", "Shop"
+}
+
+local title_color_str = "#Y%s"
+
+function Player1:ctor(obj_id)
+    self.player_id = self.obj_id
+    self.dev_item_call_back = {}
+    self.monster_num = {}
+    self.move_auth = {}
+end
+
+function Player1:Init(data)
+    data = data or {}
+    self.cache_data = data
+    self:InitData(data)
+    local component_data = data.component or {}
+    for key, value in pairs(Module) do
+        local module = value.New(self)
+        self[key] = module
+    end
+    
+    for key, value in pairs(Module) do
+        local module = self[key]
+        if module then
+            module:Init(component_data[key])
+        end
+    end
+
+    self:InitProp()
+end
+
+function Player1:InitData(data)
+    local time = os.time()
+    self.data = data.player or {}
+end
+
+function Player1:GetSaveData()
+    local data = {
+        component = {},
+        player = self.data,
+        data_ver = CONST.CurDataVer
+    }
+    for key, value in pairs(Module) do
+        local module = self[key]
+        if module and module.GetSaveData then
+            data.component[key] = module:GetSaveData()
+        end
+    end
+
+    for key, value in pairs(self.cache_data.component or {}) do
+        if not data.component[key] then
+            data.component[key] = value
+        end
+    end
+
+    return data
+end
+
+function Player1:GetPow()
+    return self.pow or 0
+end
+
+function Player1:GetPropMap()
+    return self.propMap
+end
+
+function Player1:InitProp()
+    for key, value in pairs(Module) do
+        local module = self[key]
+        if module then
+            module:RefreshProp(true)
+        end
+    end
+    self:RefreshProp(true)
+end
+
+function Player1:RefreshProp()
+    local propMap = {}
+    for key, value in pairs(propModule) do
+        local module = self[value]
+        if module then
+            local prop_map = module:GetProp()
+            for prop_type, prop_value in pairs(prop_map) do
+                propMap[prop_type] = (propMap[prop_type] or 0) + prop_value
+            end
+        end
+    end
+
+    local rateAttrs = G_ConfigManager.AttrConfig:GetRateAttrType()
+    for i, v in ipairs(rateAttrs) do
+        if propMap[v] then
+            local attr_config = G_ConfigManager.AttrConfig:GetAttrConfigByType(v)
+            if attr_config and attr_config.targetType then
+                if propMap[attr_config.targetType] then
+                    propMap[attr_config.targetType] = math.ceil(propMap[attr_config.targetType] * (1 + propMap[v]))
+                end
+            end
+        end
+    end
+    self.propMap = propMap
+    self:RefreshPlayerAttr()
+
+    local bfPow = self:GetPow()
+    self:RefreshPow()
+    local newProp = self:GetPow()
+    
+    if bfPow ~= newProp then
+        self.EventManager:Trigger(PlayerEventEnum.pow_change, newProp - bfPow)
+        self:SendPowRank()
+        -- local diff = newProp - bfPow
+        -- local tipsStr
+        -- if diff > 0 then
+        --     tipsStr = string.format(TIPS_CONST.PowChangeAddTipsStr, diff)
+        -- elseif diff < 0 then
+        --     tipsStr = string.format(TIPS_CONST.PowChangeReduceTipsStr, math.abs(diff))
+        -- end
+        -- if tipsStr then
+        --     self:SendTips(tipsStr)
+        -- end
+    end
+end
+
+function Player1:PowChange()
+    
+end
+
+function Player1:RefreshPow()
+    if 1 then
+        return 
+    end
+    self.pow = 0
+    local charmsPropMap = self.Charm:GetUseCharmProp()
+    local charmAtk = 0
+    for i, v in pairs(charmsPropMap or {}) do
+        local atk = v[PLAYER_ATTR_TYPE.atk] or 0
+        local bound = (1+(v[PLAYER_ATTR_TYPE.rate_atk] or 0))
+        charmAtk = charmAtk + atk * bound
+    end
+    local playerPropMap = self:GetPropMap()
+    local charmAtkBound = (1+(playerPropMap[PLAYER_ATTR_TYPE.rate_atk] or 0))
+    local charmTotalDmg = charmAtk * charmAtkBound
+
+    local skillTotalDmg = self.Skill:GetSkillTotalDmg()
+
+    local playerHp = playerPropMap[PLAYER_ATTR_TYPE.hp] or 0
+    local playerHpBound = 1 + (playerPropMap[PLAYER_ATTR_TYPE.rate_hp] or 0)
+    local playerTotalHp = playerHp * playerHpBound
+
+    local playerDef = playerPropMap[PLAYER_ATTR_TYPE.def] or 0
+    local playerDefBound = 1 + (playerPropMap[PLAYER_ATTR_TYPE.rate_def] or 0)
+    local playerTotalDef = playerDef * playerDefBound
+
+    local plaeyrCrit = playerPropMap[PLAYER_ATTR_TYPE.crit] or 0
+    local playerTotalCrit = plaeyrCrit / 100
+
+
+    local plaeyrCritDmg = playerPropMap[PLAYER_ATTR_TYPE.crit_dmg] or 0
+    local playerCritDmgBound = 1 + (playerPropMap[PLAYER_ATTR_TYPE.critDmgRate] or 0)
+    local playerTotalCritDmg = 1 + (plaeyrCritDmg * playerCritDmgBound / 100)
+
+    local pow = math.floor(28.5 * (charmTotalDmg + skillTotalDmg) + (11.4 * playerTotalHp) + playerTotalDef * 28.5 * playerTotalCrit * playerTotalCritDmg)
+
+    self.pow = pow
+end
+
+function Player1:SetOnlineState(state)
+    self.online_state = state
+end
+
+function Player1:GetOnlineState()
+    return self.online_state
+end
+
+function Player1:Update(second)
+    -- self.CharmManager:Update(second)
+    if second then
+        -- self.Online:Update(second)
+        -- self.Buff:Update(second)
+        -- self.AFKManager:Update(second)
+        self:CheckDevItemCallback()
+    end
+end
+
+function Player1:LeaveGame(pos)
+    for key, value in pairs(Module) do
+        local module = self[key]
+        if module then
+            module:LeaveGame()
+        end
+    end
+end
+
+function Player1:LoadDone()
+    -- self.Map:TPToMap(CONST.MainCityMapId)
+    for key, value in pairs(Module) do
+        local module = self[key]
+        if module then
+            module:OnLoadDone()
+        end
+    end
+    self.done_sign = true
+    self.DataManager:SetSaveSign(true)
+    
+    -- self.EventManager:SubscribeEvent(PlayerEventEnum.itemNotify, {owner = self, func = self.TempItemNotify})
+    -- self.EventManager:SubscribeEvent(PlayerEventEnum.itemListNotify, {owner = self, func = self.TempItemListNotify})
+    -- self.EventManager:SubscribeEvent(PlayerEventEnum.lv_change, {owner = self, func = self.RefreshStageTitle})
+    -- self:RefreshStageTitle()
+    -- self:FillHp()
+    -- self.DetailInfo:SendRookieGift()
+    -- self:LookAt(CONST.LoginLookAtPos)
+    -- 锁定为动作视角
+    -- Player:changeViewMode(self:GetPlayerId(), 3, true)
+    -- self.Map:TPToMap(CONST.MainCityMapId)
+end
+
+function Player1:TempItemNotify(item)
+    local propMap = self.player:GetPropMap()
+    local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(item.id)
+    if not item_config then
+        return
+    end
+    local itemInfo = self:GetBoundItemNum(item)
+    self:SendTips(string.format(TIPS_CONST.AnyPlusAnyTipsStr, item_config.name, NumToString(itemInfo.num, 1)))
+end
+
+function Player1:GetBoundItemNum(itemInfo)
+    local propMap = self:GetPropMap()
+    local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(itemInfo.id)
+    if not item_config then
+        return itemInfo
+    end
+    local addNum = itemInfo.num
+    if itemInfo.id == CONST.ExpItemId then
+        local rate = propMap[PLAYER_ATTR_TYPE.expAddRate] or 0
+        addNum = math.floor(addNum * (1+rate))
+    elseif itemInfo.id == CONST.lingshiItemId then
+        local rate = propMap[PLAYER_ATTR_TYPE.lingshiAddRate] or 0
+        addNum = math.floor(addNum * (1+rate))
+    elseif itemInfo.id == CONST.lingqiItemId then
+        local rate = propMap[PLAYER_ATTR_TYPE.lingqiAddRate] or 0
+        addNum = math.floor(addNum * (1+rate))
+    elseif item_config.type == ItemType.skill then
+        local skillAdd = propMap[PLAYER_ATTR_TYPE.skillAdd] or 0
+        addNum = math.floor(addNum + skillAdd)
+    end
+
+    local newItem = DeepCopy(itemInfo)
+    newItem.num = addNum
+
+    return newItem
+end
+
+function Player1:TempItemListNotify(itemList)
+    for i, item in ipairs(itemList) do
+        local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(item.id)
+        if not item_config then
+            return
+        end
+        local itemInfo = self:GetBoundItemNum(item)
+        self:SendTips(string.format(TIPS_CONST.AnyPlusAnyTipsStr, item_config.name, NumToString(itemInfo.num, 1)))
+    end
+end
+
+function Player1:OnLoadingClose()
+    if not self.done_sign then
+        return
+    end
+    
+end
+
+function Player1:GetName()
+    if not self.context then
+        local result,context = Player:getNickname(self:GetPlayerId())
+        self.context = context or ""
+    end
+    return self.context
+end
+
+function Player1:GetIcon()
+    if not self.icon then
+        local result,icon = Customui:getRoleIcon(self:GetPlayerId())
+        self.icon = icon or ""
+    end
+    return self.icon
+end
+
+function Player1:GetDoneSign()
+    return self.done_sign
+end
+
+function Player1:GetPlayerId()
+    return self.player_id
+end
+
+function Player1:GetPos()
+	local result,x,y,z=Actor:getPosition(self:GetPlayerId())
+    if not x then
+        return
+    end
+    return Vector3.New(x, y, z)
+end
+
+function Player1:GetLv()
+    return 0
+end
+
+function Player1:CheckItemEnough(items, notify)
+    if not items or not next(items) then
+        return false
+    end
+    for index, value in ipairs(items) do
+        local have = self:GetItemNum(value.id)
+        if have < value.num then
+            if notify then
+                local config = G_ConfigManager.ItemConfig:GetItemConfigById(value.id)
+                if config then
+                    self:SendTips(string.format(TIPS_CONST.NotEnoughTipsStr, config.name, NumToString(value.num), NumToString(have)))
+                end
+                return
+            end
+            return false
+        end
+    end
+    return true
+end
+
+function Player1:AddItem(item)
+    local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(item.id)
+    if not item_config then
+        return false
+    end
+    if item_config.type == ItemType.money then
+        self.DetailInfo:AddCurrency(item.id, item.num)
+        return true
+    elseif item_config.type == ItemType.exp then
+        return self.DetailInfo:AddExp(item.num)
+    elseif item_config.type == ItemType.skill then
+        return self.Skill:AddSkill(item.id, item.num)
+    elseif item_config.type == ItemType.material then
+        return self.Bag:AddItem(item.id, item.num)
+    elseif item_config.type == ItemType.charm then
+        if item.num < 0 then
+            return false 
+        end
+        return self.Charm:AddCharm(item.id, item.num, item.lv, item.isLock)
+    end
+    
+    return false
+end
+
+function Player1:AddBoundItem(item)
+    local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(item.id)
+    if not item_config then
+        return false
+    end
+    item = self:GetBoundItemNum(item)
+    if not item then
+        return false
+    end
+    return self:AddItem(item)
+end
+
+function Player1:GetItemNum(id)
+    local item_num = 0
+    local item_config = G_ConfigManager.ItemConfig:GetItemConfigById(id)
+    if not item_config then
+        return item_num
+    end
+    if item_config.type == ItemType.money then
+        item_num = self.DetailInfo:GetCurrency(id)
+        return item_num
+    elseif item_config.type == ItemType.exp then
+        return self.DetailInfo:GetExp()
+    elseif item_config.type == ItemType.skill then
+        return self.Skill:GetSkillNum(id)
+    elseif item_config.type == ItemType.material then
+        return self.Bag:GetItemNum(id)
+    elseif item_config.type == ItemType.charm then
+        return 0
+    end
+    if item_config.plugin_id then
+        item_num = self:GetBackpackItemTotalNum(item_config.plugin_id)
+        return item_num
+    end
+    return item_num
+end
+
+function Player1:AddBackpackItem(plugin_id, num)
+    --最后一个参数是优先快捷栏还是背包栏：1优先快捷栏 2优先背包栏
+    Player:gainItems(self:GetPlayerId(), plugin_id, num, 1)
+end
+
+function Player1:GetBackpackItemTotalNum(id)
+    local num = 0
+    for index, value in pairs(BackpackType) do
+        local result,have, arr = Backpack:getItemNumByBackpackBar(self:GetPlayerId(), value, id)
+        num = num + (have or 0)
+    end
+    return num
+end
+
+function Player1:GetBackpackOnceItem(id)
+    for index, value in pairs(BackpackType) do
+        local result,have, arr = Backpack:getItemNumByBackpackBar(self:GetPlayerId(), value, id)
+        if have > 0 then
+            return arr[1]
+        end
+    end
+end
+
+function Player1:RemoveBackPackItemBySlot(backpack_idx, num)
+    num = num or 1
+    local res, ret = Backpack:removeGridItem(self:GetPlayerId(), backpack_idx, num)
+    return res == ErrorCode1.succ
+end
+
+function Player1:ConsumeBackpackItem(id, num)
+    local result,real_num = Backpack:removeGridItemByItemID(self:GetPlayerId(), id, num)
+    return num == real_num
+end
+
+function Player1:GetBackpackSlotItem(idx)
+    local result, itemid, num = Backpack:getGridItemID(self:GetPlayerId(), idx)
+    if itemid then
+        return {id = itemid, num = num}
+    end
+end
+
+function Player1:ConsumeItem(id, num)
+    local newNum = num
+    
+    if num > 0 then
+        num = num * -1
+    end
+
+    --使用钥匙
+    if id == 1 then
+        if newNum < 0 then
+            newNum = newNum * 1
+        end
+        self:OnTriggerEventHook(EventHookType.useKey, newNum)
+    end
+    return self:AddItem({id = id, num = num})
+end
+
+function Player1:ConsumeItems(items)
+    local succ = false
+    for index, value in ipairs(items) do
+        succ = self:ConsumeItem(value.id, value.num)
+        if succ ~= true then
+            return succ
+        end
+    end
+    return succ
+end
+
+function Player1:SetPos(pos)
+    Player:setPosition(self:GetPlayerId(), pos.x, pos.y, pos.z)
+    self.target_pos = pos
+    threadpool:work(function ()
+        G_GameManager:WaitForSecond(0.15)
+        Player:setPosition(self:GetPlayerId(), self.target_pos.x, self.target_pos.y, self.target_pos.z)
+    end)
+end
+
+function Player1:LookAt(pos)
+    if not pos then
+        return
+    end
+    local self_pos = self:GetPos()
+    if not self_pos then
+        return
+    end
+    local angle = CalcAngle({x = pos.x, y = pos.z}, {x = self_pos.x, y = self_pos.z})
+    Actor:setFaceYaw(self:GetPlayerId(), -angle-90)
+    Player:rotateCamera(self:GetPlayerId(), -angle + 90, 15)
+end
+
+function Player1:LookAtEntity(entity)
+    local pos = entity:GetPos()
+    if not pos then
+        return
+    end
+    local self_pos = self:GetPos()
+    if not self_pos then
+        return
+    end
+    local angle = CalcAngle({x = pos.x, y = pos.z}, {x = self_pos.x, y = self_pos.z})
+    Actor:setFaceYaw(self:GetPlayerId(), -angle-90)
+    Player:rotateCamera(self:GetPlayerId(), -angle + 90, 35)
+end
+
+function Player1:Die()
+    -- local exp = self.DetailInfo:GetExp()
+    -- if exp > 0 then
+    --     local reduce = math.ceil(exp * CONST.PlayerDieReduceExpRate)
+    --     self.DetailInfo:AddExp(-reduce)
+    --     self:SendTips(string.format(TIPS_CONST.DieExpReduceTipsStr, NumToString(reduce, 1)))
+    -- end
+    local cur_map = self.Map:GetCurMap()
+    local map = G_MapManager:GetMap(cur_map)
+    if map then
+        map:OnPlayerDie(self)
+    end
+    self.AFKManager:DoneAFK()
+    self.CharmManager:DestroyCharm()
+end
+
+function Player1:PlayerRevive()
+    -- local cur_map = self.Map:GetCurMap()
+    -- local target_map = CONST.MainCityMapId
+    -- local cur_map_config = G_ConfigManager.MapConfig:GetMapConfigById(cur_map)
+    -- if cur_map_config and cur_map_config.respawn then
+    --     target_map = cur_map
+    -- end
+    -- self.Map:PlayerRevive(target_map)
+    self.Map:TPToMap(CONST.MainCityMapId)
+    self.EventManager:Trigger(PlayerEventEnum.die_stronger)
+    self.CharmManager:RefreshCharm()
+end
+
+function Player1:SetActionAttrState(type, state)
+    Player:setActionAttrState(self:GetPlayerId(), type, state)
+end
+
+function Player1:KillMonster(configId)
+    self.CharmManager:OnKillMonster(configId)
+    -- self.DailyTask:CheckTaskProgress(DailyTaskType.any_kill, 1)
+	self:OnTriggerEventHook(EventHookType.anyKill, 1)
+
+    local mType = G_ConfigManager.MonsterConfig:GetMonsterConfigById(configId).type
+    if mType == MonsterType.boss then
+        self:OnTriggerEventHook(EventHookType.bossKill, 1)
+    elseif mType == MonsterType.bigBoss then
+        self:OnTriggerEventHook(EventHookType.hardBossKill, 1)
+    else
+    end
+    
+    self:OnTriggerEventHook(EventHookType.anyKill, 1)
+    self.GuideManager:CheckGuide(GuideType.anyKill, 1)
+end
+
+
+-- 这里只用来检测玩家之间逻辑
+function Player1:DefeatActor(target_id)
+    local target_player = G_PlayerManager:GetPlayer(target_id)
+    if not target_player then
+        return
+    end
+    
+end
+
+function Player1:SetTeam(team)
+    Player:setTeam(self:GetPlayerId(), team)
+    local main_player = MainScriptPlayer[self:GetPlayerId()]
+    if main_player then
+        local props = main_player:GetPlayerProp()
+        if props and next(props) then
+            self:SetPlayerAttr(PLAYERATTR.MAX_HP, props[PLAYER_ATTR_TYPE.hp])
+            self:SetPlayerAttr(PLAYERATTR.CUR_HP, props[PLAYER_ATTR_TYPE.hp])
+        end
+    end
+end
+
+function Player1:FillHp()
+    local max_hp = self:GetAttr(PlayerAttrType.max_hp)
+    if max_hp <= 0 then
+        return
+    end
+    self:SetPlayerAttr(PlayerAttrType.cur_hp, max_hp)
+end
+
+function Player1:SetPlayerAttr(type, value)
+    Player:setAttr(self:GetPlayerId(), type, value)
+end
+
+function Player1:GetTeam()
+    local result,value = Player:getTeam(self:GetPlayerId())
+    return value or 0
+end
+
+function Player1:GetUUID()
+    local result, time = World:getServerDate(6) -- 服务器时间戳
+    if self.data.uuid and self.data.uuid >= time then
+        self.data.uuid = (self.data.uuid or 0) + 1
+        return self.data.uuid
+    end
+    self.data.uuid = time
+    return self.data.uuid
+end
+
+function Player1:GetActivitiesItems()
+    local items = {}
+    for index, value in ipairs(ActivitiesModule) do
+        local module = self[value]
+        if module and type(module.GetActivitiesItems) == "function" then
+            module:GetActivitiesItems(items)
+        end
+    end
+    return items
+end
+
+function Player1:AddActivitiesRecharge(num)
+    local items = {}
+    for index, value in ipairs(ActivitiesModule) do
+        local player_module = self[value]
+        if player_module and type(player_module.AddRechargeNum) == "function" then
+            player_module:AddRechargeNum(num)
+        end
+    end
+    return items
+end
+
+function Player1:CheckDevItemCallback()
+    local time = os.time()
+    local key_list = {}
+    for key, value in pairs(self.dev_item_call_back) do
+        if value.time + 30 < time then
+            table.insert(key_list, key)
+        end
+    end
+
+    for index, value in ipairs(key_list) do
+        self.dev_item_call_back[value] = nil
+    end
+end
+
+function Player1:BuyDevItem(dev_item_id, call_back)
+    local dev_item_config = G_ConfigManager.DevItemConfig:GetDevItemConfigById(dev_item_id)
+    if not dev_item_config then
+        return
+    end
+    Player:openDevGoodsBuyDialog(self:GetPlayerId(), dev_item_config.id, dev_item_config.desc)
+    if call_back then
+        local time = os.time()
+        self.dev_item_call_back[dev_item_id] = {
+            func = call_back,
+            time = time
+        }
+    end
+end
+
+function Player1:OnBuyDevItem(dev_item_id)
+    local dev_config = G_ConfigManager.DevItemConfig:GetDevItemConfigById(dev_item_id)
+    if not dev_config then
+        return
+    end
+    
+    local rwds = {}
+    for index, value in ipairs(dev_config.rwds or {}) do
+        local rwd = value
+        -- if type(value.id) == "table" then
+        --     local random_id = value.id[math.random(1, #value.id)]
+        --     rwd = {itemType = rwd.itemType, id = random_id, num = rwd.num}
+        -- end
+        self:AddItem(rwd)
+        table.insert(rwds, rwd)
+    end
+    self.EventManager:Trigger(PlayerEventEnum.itemListNotify, rwds)
+    
+    if dev_config.module then
+        local player_module = self[dev_config.module]
+        if player_module and type(player_module.OnBuyDevItem) == "function" then
+            player_module:OnBuyDevItem(dev_item_id)
+        end
+    end
+
+    local call_back_info = self.dev_item_call_back[dev_item_id]
+    if call_back_info then
+        local res, ret = pcall(call_back_info.func)
+        if not res then
+            G_LogManager:error(ret)
+        end
+    end
+
+    self.dev_item_call_back[dev_item_id] = nil
+    self.Recharge:OnBuyDevItem(dev_item_id)
+end
+
+function Player1:CreateTitleImg(img)
+    Graphics:removeGraphicsByObjID(self:GetPlayerId(), 1, GRAPHICS.GRAPHICS_IMAGE)
+    if not img then
+        return
+    end
+    local info = Graphics:makeGraphicsImage(img, .7, 100, 1)
+
+    Graphics:createGraphicsImageByActor(self:GetPlayerId(), info, {x= 0, y = 28, z = 0}, 10, 0, 0)
+end
+
+function Player1:GetDistance(entity)
+    local pos = entity:GetPos()
+    if not pos then
+        return
+    end
+    local self_pos = self:GetPos()
+    if not self_pos then
+        return
+    end
+    local distance = Distance(self_pos, pos)
+    return distance
+end
+
+function Player1:OnPlayerNewInputContent(context)
+    
+end
+
+function Player1:GetAttr(type)
+    local result, value = Player:getAttr(self:GetPlayerId(), type)
+    return value or 0
+end
+
+function Player1:SendTips(str)  -- 发送系统飘字通知
+    Player:notifyGameInfo2Self(self:GetPlayerId(), str)
+end
+
+function Player1:UseItem(id, num, fast_slot)
+    -- local item_config = G_ConfigManager.ItemConfig:GetItemConfigByPlugin(id)
+    -- if not item_config then
+    --     return
+    -- end
+
+    -- local module_name = item_config.module
+    -- if not module_name then
+    --     return
+    -- end
+    -- local func_name = item_config.func
+    -- if not func_name then
+    --     return
+    -- end
+    -- local player_module = self[module_name]
+    -- if not player_module then
+    --     return
+    -- end
+    -- local func = player_module[func_name]
+    -- if not func then
+    --     return
+    -- end
+    -- local real_idx = CONST.FastSlotBeginIdx + fast_slot
+    -- local res, ret = pcall(func, player_module, id, num, real_idx)
+    -- if not res then
+    --     G_LogManager:error(ret)
+    --     return
+    -- end
+end
+
+function Player1:SendPowRank()
+    local time = os.time()
+    if not self.last_send_pow_rank_time then
+        self.last_send_pow_rank_time = time
+        return
+    end
+
+    if time - self.last_send_pow_rank_time < CONST.RankMinInterval then
+        return
+    end
+    if G_ConfigManager.AdminConfig:GetPlayerIsWhite(self:GetPlayerId()) then
+        return 
+    end
+    local pow = self:GetPow()
+    G_RankManager:SendRankData(RankType.power, self:GetPlayerId(), pow)
+end
+
+function Player1:RefreshPlayerAttr()
+    local attrs = G_ConfigManager.AttrConfig:GetSystemAttrType()
+    for index, type in ipairs(attrs) do
+        local prop_value = self.propMap[type]
+        local config = G_ConfigManager.AttrConfig:GetAttrConfigByType(type)
+        if config and config.actor_type and prop_value and prop_value > 0 then
+            self:SetPlayerAttr(config.actor_type, prop_value)
+        end
+    end
+end
+
+function Player1:GetCurToolID()
+    local result,id = Player:getCurToolID(self:GetPlayerId())
+    return id
+end
+
+function Player1:SelectShortcut()
+    -- self.FastSlot:RefreshProp()
+end
+
+function Player1:MountActor(entity)
+    if not entity then
+        return
+    end
+	Player:mountActor(self:GetPlayerId(), entity:GetObjId(), 1)
+end
+
+function Player1:ActorHurt(entity, dmg, attack_type)
+    Actor:playerHurt(self:GetPlayerId(), entity:GetObjId(), dmg, attack_type)
+end
+
+function Player1:RefreshStageTitle()
+    local lv = self.DetailInfo:GetLv()
+    local lv_config = G_ConfigManager.PlayerConfig:GetLvConfigByLv(lv)
+    if not lv_config then
+        return
+    end
+    local context = string.format(title_color_str, lv_config.name)
+    self:SetTitleLabel(context, CONST.PlayerTitleContextSize, CONST.PlayerStageTitleNumber)
+end
+
+function Player1:SetTitleLabel(context, text_size, number)
+    local obj_id = self:GetObjId()
+    if not obj_id then
+        return
+    end
+    
+    if self.graphid then
+        Graphics:removeGraphicsByObjID(obj_id, number, 1)
+        self.graphid = nil
+    end
+    if not context then
+        return
+    end
+    local graphicsInfo=Graphics:makeGraphicsText(context, text_size, 0, number)
+    local height = CONST.PlayerTitleBaseHeight + (number - 1) * CONST.PlayerTitleStepHeight
+    local dir={x=0,y=height,z=0}--偏移方向
+    --在实体上显示文字板
+    local result, graphid = Graphics:createGraphicsTxtByActor(obj_id, graphicsInfo, dir, 10, 0, 0)
+    self.graphid = graphid
+end
+
+function Player1:OnDamageActor(target_id, dmg)
+    local entity = G_EntityManager:GetEntity(target_id)
+    if not entity then
+        return
+    end
+    self.EventManager:Trigger(PlayerEventEnum.take_dmg, entity)
+end
+
+function Player1:DismountActor()
+    local ride = self.Ride:GetCurRide()
+    if not ride then
+        return
+    end
+    self.Ride:CancelRide()
+end
+
+function Player1:OnAttrChange()
+    self.EventManager:Trigger(PlayerEventEnum.hp_change)
+end
+
+function Player1:SetMoveState(type, state)
+    self.move_auth[type] = state
+    self:SetActionAttrState(PlayerActionType.move, not next(self.move_auth))
+end
+
+function Player1:OnPlayerClick(player_id)
+    -- local cur_map = self.Map:GetCurMap()
+    -- if cur_map ~= CONST.MainCityMapId then
+    --     return
+    -- end
+    -- local player = G_PlayerManager:GetPlayer(player_id)
+    -- if not player then
+    --     return
+    -- end
+    -- player.UIManager:OpenUI(UIPanel.OtherInfo, {other_id = self:GetPlayerId()})
+end
+
+function Player1:RecoverHpRate(rate)
+    local max_hp = self:GetAttr(PlayerAttrType.max_hp)
+    if max_hp <= 0 then
+        return
+    end
+    local cur_hp = self:GetAttr(PlayerAttrType.cur_hp)
+    if cur_hp <= 0 then
+        return
+    end
+    local add_hp = math.ceil(max_hp * rate)
+    local hp = Clamp(cur_hp + add_hp, max_hp, cur_hp)
+    self:SetPlayerAttr(PlayerAttrType.cur_hp, hp)
+end
+
+function Player1:RecoverHp(value)
+    local max_hp = self:GetAttr(PlayerAttrType.max_hp)
+    if max_hp <= 0 then
+        return
+    end
+    local cur_hp = self:GetAttr(PlayerAttrType.cur_hp)
+    if cur_hp <= 0 then
+        return
+    end
+    local add_hp = value
+    local hp = Clamp(cur_hp + add_hp, max_hp, cur_hp)
+    self:SetPlayerAttr(PlayerAttrType.cur_hp, hp)
+end
+
+function Player1:OnAttackHit(target_id, rate)
+    rate = rate or 1
+    local entity = G_EntityManager:GetEntity(target_id)
+    if not entity then
+        return
+    end
+    entity:PlayBodyEffectById(EffectId.light_44)
+    local self_prop_map = self:GetPropMap()
+    local prop_map = entity:GetPropMap()
+    local def = entity:GetDef()
+    local config = G_ConfigManager.AttrConfig:GetSpecialAttrConfig()
+    for index, value in ipairs(config) do
+        local dmg = math.floor(((1-def)*((self_prop_map[value.type] or 0) - (prop_map[value.def] or 0))) * rate)
+        if dmg > 0 then
+            self:ActorHurt(entity, dmg, HurtType.remote)
+            -- entity:InjuredSpecialDmg(value.type, dmg)
+            self.EventManager:Trigger(PlayerEventEnum.take_special_dmg, value.type, dmg)
+        end
+    end
+    local dmg = math.floor((self_prop_map[PLAYER_ATTR_TYPE.atk] or 0)*(1-def))
+    self.EventManager:Trigger(PlayerEventEnum.take_special_dmg, PLAYER_ATTR_TYPE.atk, dmg)
+end
+
+function Player1:TakeSkillDmg(target_id, mult)
+    local entity = G_EntityManager:GetEntity(target_id)
+    if not entity then
+        return
+    end
+    local self_prop_map = self:GetPropMap()
+    local dmg = math.floor((self_prop_map[PLAYER_ATTR_TYPE.atk] or 0) * mult)
+    if dmg > 0 then
+        self:ActorHurt(entity, dmg, HurtType.melee)
+        -- entity:InjuredSpecialDmg(value.type, dmg)
+        -- self.EventManager:Trigger(PlayerEventEnum.take_special_dmg, PLAYER_ATTR_TYPE.atk, dmg)
+    end
+end
+
+function Player1:OnMountActor(ride_id)
+    local entity = G_EntityManager:GetEntity(ride_id)
+    if not entity then
+        G_GameManager:DespawnActor(ride_id)
+        return
+    end
+    local ride_owner = entity:GetOwnerId()
+    if ride_owner == self:GetPlayerId() then
+        return
+    end
+    entity:Destroy()
+end
+
+function Player1:CheckEnoughSpaceForItem(plugin_id, num)
+    local result = Backpack:enoughSpaceForItem(self:GetPlayerId(), plugin_id, num)
+    return result == ErrorCode1.succ
+end
+
+function Player1:GetBagItemRemainingNum(plugin_id)
+    local result,num = Backpack:calcSpaceNumForItem(self:GetPlayerId(), plugin_id)
+    return num or 0
+end
+
+function Player1:PlayAudio(audio_id, volume)
+    self:StopAudio(audio_id)
+    Player:playMusic(self:GetPlayerId(), audio_id, volume, 1, false)
+end
+
+function Player1:StopAudio(audio_id)
+	Player:stopMusic(self:GetPlayerId(), audio_id)
+end
+
+function Player1:OpenDevStore()
+	Player:openDevStore(self:GetPlayerId())
+    -- Player:openDevStoreNew(self:GetPlayerId())
+end
+
+function Player1:GetCurShotcut()
+    local result, scutIdx = Player:getCurShotcut(self:GetPlayerId())
+    if not scutIdx then
+        return
+    end
+    local backpack_idx = CONST.FastSlotBeginIdx + scutIdx
+    return backpack_idx
+end
+
+function Player1:SetItemCD(plugin_id, cd)
+	Player:setSkillCD(self:GetPlayerId(), plugin_id, cd)
+end
+
+function Player1:OnTriggerEventHook(hookType, param)
+    -- print("hookType, param", hookType, param)
+    self.Pass:CheckProgress(hookType, param)
+    self.Achieve:CheckProgress(hookType, param)
+end

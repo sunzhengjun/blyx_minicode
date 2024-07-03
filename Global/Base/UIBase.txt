@@ -1,0 +1,49 @@
+local UIBase = Component.Base.UI
+
+function UIBase:ctor()
+    
+end
+
+function UIBase:Init()
+    
+end
+
+function UIBase:SetInitParam(params)
+    self.init_params = params or self.init_params
+end
+
+function UIBase:RefreshPanelState()
+    self:InitPanel()
+end
+
+function UIBase:GetAuth()
+    return true
+end
+
+function UIBase:OnBuyDevItem()
+    
+end
+
+function UIBase:Update()
+    
+end
+
+function UIBase:OnKeyDown(key)
+    
+end
+
+function UIBase:GetState()
+    return self.state
+end
+
+function UIBase:SetState(state)
+    self.state = state
+end
+
+function UIBase:OnLostFocus(e)
+    
+end
+
+function UIBase:OnClose()
+    
+end

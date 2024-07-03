@@ -1,0 +1,56 @@
+local RankManager = Component.Manager.RankManager
+
+
+local rank_name_map = {
+    [1] = {name = "T1rank1", num = 100,},
+}
+
+function RankManager:ctor()
+    
+end
+
+function RankManager:Init()
+    local time = os.time()
+    self.rank_data = {}
+    for index, value in pairs(RankType) do
+        self.rank_data[value] = {
+            next_time = 0,
+            data = {}
+        }
+        self:GetRankByType(value)
+    end
+    self.last_time = 0
+end
+
+function RankManager:GetRankData(rank_type)
+    return self.rank_data[rank_type]
+end
+
+function RankManager:GetRankByType(rank_type)
+    local rank_config = rank_name_map[rank_type]
+    if not rank_config then
+        return
+    end
+    local time = os.time()
+    local rank_info = self:GetRankData(rank_type)
+    if not rank_info then
+        return
+    end
+    
+    if time >= rank_info.next_time then
+        local ret = CloudSever:getOrderDataIndexArea(rank_config.name, rank_config.num * -1, function(ret, value)
+            rank_info.data = value
+        end)
+        rank_info.next_time = time + math.random(60, 90)
+    end
+    
+    return rank_info.data
+end
+
+function RankManager:SendRankData(rank_type, playerId, param)
+    local rank_config = rank_name_map[rank_type]
+    if not rank_config then
+        return
+    end
+    CloudSever:setOrderDataBykey(rank_config.name, playerId, param)
+end

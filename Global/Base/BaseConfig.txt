@@ -1,0 +1,49 @@
+local BaseConfig = Component.Base.Config
+
+function BaseConfig:ctor(parent)
+    self.parent = parent
+end
+
+function BaseConfig:Init()
+    
+end
+
+function BaseConfig:GetIdsRwd(list)
+    local items = {}
+    for index, value in ipairs(list or {}) do
+        local randomValue = math.random(1, CONST.NormalMaxWeight)
+        local drop_rate = value.rate or 0
+        if randomValue <= drop_rate then
+            local num = math.random(value.min, value.max)
+            local random_idx = math.random(1, #value.id)
+            local item_id = value.id[random_idx]
+            table.insert(items, {id = item_id, num = num})
+        end
+    end
+    return items
+end
+
+function BaseConfig:GetIdsWeightRwd(list)
+    local rand = math.random(1, CONST.NormalMaxWeight)
+    for index, value in ipairs(list) do
+        if rand <= value.rate then
+            local rand_idx = math.random(1, #value.id)
+            local real_id = value.id[rand_idx]
+            local rwd = {id = real_id, num = math.random(value.min, value.max)}
+            return rwd
+        else
+            rand = rand - value.rate
+        end
+    end
+end
+
+function BaseConfig:GetPieceByWeight(list)
+    local rand = math.random(1, CONST.NormalMaxWeight)
+    for index, value in ipairs(list) do
+        if rand <= value.weight then
+            return value
+        else
+            rand = rand - value.weight
+        end
+    end
+end

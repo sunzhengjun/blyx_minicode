@@ -1,0 +1,216 @@
+local GameManager = Component.Manager.GameManager
+
+local ticket = 0.3
+
+function GameManager:ctor()
+    
+end
+
+function GameManager:Init()
+    
+end
+
+function GameManager:GameInitDone()
+    threadpool:work(function ()
+        while true do
+            G_PlayerManager:PlayerUIUpdate()
+            self:WaitForSecond(ticket)
+        end
+    end)
+    -- threadpool:work(function ()
+    --     while true do
+    --         G_PlayerManager:PlayerCharmUpdate()
+    --         self:WaitForSecond(0.02)
+    --     end
+    -- end)
+end
+
+function GameManager:OnMinute()
+    -- G_MonsterManager:OnMinute()
+    G_CollectManager:OnMinute()
+end
+
+function GameManager:OnHours()
+
+end
+
+function GameManager:Update(second)
+    G_PlayerManager:Update(second)
+    -- G_RespawnManager:Update(second)
+    -- G_GameOtherManager:Update(second)
+    -- G_MapManager:Update(second)
+    if second and second % TIME_CONST.min == 0 and second > 0 then
+        self:OnMinute()
+    end
+    if second and second % TIME_CONST.hour == 0 and second > 0 then
+        self:OnHours()
+    end
+end
+
+
+function GameManager:PlayerEnter(playerId)
+    -- local item_config = G_ConfigManager.ItemConfig:GetItemConfig()
+    -- for index, value in ipairs(item_config) do
+    --     if value.drop and value.plugin_id then
+    --         Player:setItemAttAction(player_id, value.plugin_id, 1, true)
+    --     end
+    -- end
+    G_CollectManager:AddSystemLogTimes(SystemLogEnum.player_enter, 1)
+    -- if not playerId then
+    --     return
+    -- end
+    -- self:LoadPlayerData(playerId)
+end
+
+function GameManager:LoadPlayer(playerId)
+    -- if 1 then
+    --     local v = ""
+    --     local data = JSON:decode(v)
+    --     self:OnLoadComplate(playerId, data)
+    --     return
+    -- end
+    if not playerId then
+        return
+    end
+    self:LoadPlayerData(playerId)
+end
+
+function GameManager:PlayerLeave(playerId) -- 玩家退出游戏
+    local player = G_PlayerManager:GetPlayer(playerId)
+    if not player then
+        return
+    end
+    player:SetOnlineState(PlayerStateType.leaving)
+    -- G_MapManager:PlayerLeave(playerId)
+    G_PlayerManager:PlayerLeave(playerId)
+    -- G_StageUpManager:PlayerLeave(playerId)
+    G_CollectManager:PlayerLeave()
+end
+
+function GameManager:CreateActor(actor_id, pos)
+    local result,objids = World:spawnCreature(pos.x, pos.y, pos.z, actor_id, 1)
+    local id = (objids or {})[1]
+    return id or 0
+end
+
+function GameManager:DespawnActor(obj_id)
+    G_EntityManager:OnActorDie(obj_id)
+    World:despawnCreature(obj_id)
+end
+
+function GameManager:OnAllPlayerLeave()
+    
+end
+
+function GameManager:CreatePluginItem(pos, plugin_id, num)
+    if not pos then
+        return
+    end
+    if not plugin_id then
+        return
+    end
+    World:spawnItem(pos.x, pos.y, pos.z, plugin_id, num)
+end
+
+function GameManager:CreateAreaOfRange(pos1, pos2)
+    local _, area_id = Area:createAreaRectByRange(pos1, pos2)
+    return area_id
+end
+
+function GameManager:CreateArea(point, size)
+    local _,area_id=Area:createAreaRect(point, size)
+    return area_id
+end
+
+function GameManager:GetAreaCreatures(areaId)
+    local result,array=Area:getAreaCreatures(areaId)
+    return array or {}
+end
+
+function GameManager:DestroyArea(areaId)
+    Area:destroyArea(areaId)
+end
+
+function GameManager:UseFireworks(player_id)
+    local res, slot = Player:getCurShotcut(player_id)
+    Backpack:removeGridItem(player_id, CONST.FastSlotBeginIdx + slot)
+    Backpack:setGridItem(player_id, CONST.FastSlotBeginIdx + slot, CONST.FireworksItemId, 1, nil)
+    Player:useItem(player_id, CONST.FireworksItemId, 0, true)
+end
+
+function GameManager:LoadPlayerData(playerId)
+    CloudSever:getDataListByKeyEx(CONST.PlayerDataDBName, playerId, function (ret,k,v)
+        local data
+        if ret == ErrorCode.OK then
+            if type(v) == "string" and string.len(v) > 0 then
+                data = JSON:decode(v)
+                if data.data_ver > CONST.CurDataVer then
+                    -- 显示数据冲突页面 停止加载
+                    return
+                end
+                Player:notifyGameInfo2Self(playerId, "#G数据加载成功!")
+            end
+        elseif ret == 2 then --=不存在数据
+            Player:notifyGameInfo2Self(playerId, "#G欢迎你,新玩家!")
+        else
+            return
+        end
+        self:OnLoadComplate(playerId, data)
+    end)
+end
+
+function GameManager:OnLoadComplate(playerId, data)
+    G_PlayerManager:AddPlayer(playerId, data)
+end
+
+function GameManager:PlayParticalEffect(pos, id, size)
+    World:playParticalEffect(pos.x, pos.y, pos.z, id, size)
+end
+
+function GameManager:StopEffectOnPosition(pos, id)
+    World:stopEffectOnPosition(pos.x, pos.y, pos.z, id)
+end
+
+function GameManager:SendSystemMsg(str)
+    Chat:sendSystemMsg(str)
+end
+
+function GameManager:SetHours(hours)
+    World:setHours(hours)
+end
+
+function GameManager:GetAreaPlayer(area_id)
+    local result,playerlist = Area:getAreaPlayers(area_id)
+    return playerlist or {}
+end
+
+function GameManager:GetAllObjsInAreaRangeByObjTypes(begin_pos, end_pos, types)
+	local result,objids = Area:getAllObjsInAreaRangeByObjTypes(begin_pos, end_pos, types)
+    return objids or {}
+end
+
+function GameManager:SpawnProjectile(owner, projectile_id, begin_pos, target_pos, speed)
+    local _, obj_id = World:spawnProjectile(owner, projectile_id, begin_pos.x, begin_pos.y, begin_pos.z, target_pos.x, target_pos.y, target_pos.z, speed)
+    return obj_id
+end
+
+function GameManager:SpawnProjectileByDir(owner, projectile_id, begin_pos, dir, speed)
+    local _, obj_id = World:spawnProjectileByDir(owner, projectile_id, begin_pos.x, begin_pos.y, begin_pos.z, dir.x,dir.y,dir.z, speed)
+    return obj_id
+end
+
+function GameManager:WaitForSecond(second)
+    local times = math.ceil(second / CONST.Ticket)
+    for i = 1, times do
+        Trigger:wait(CONST.Ticket)
+    end
+end
+
+function GameManager:PlaceBlock(pos, block_id, dir)
+    dir = dir or 0
+    Block:placeBlock(block_id, pos.x, pos.y, pos.z, dir)
+end
+
+function GameManager:DestroyBlock(pos)
+    Block:destroyBlock(pos.x, pos.y, pos.z)
+end

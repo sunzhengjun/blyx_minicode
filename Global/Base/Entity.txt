@@ -1,0 +1,331 @@
+local Entity = Component.Base.Entity
+
+local normal_height = 13
+local undefine_str = "undefine"
+
+function Entity:ctor(obj_id)
+    self.obj_id = obj_id
+    self.loop_effect = {}
+    self.selectedCounter = 0
+    self.propMap = {}
+end
+
+function Entity:RefreshProp()
+    
+end
+
+function Entity:GetPropMap()
+    return self.propMap
+end
+
+function Entity:SetPos(pos)
+	Actor:setPosition(self.obj_id, pos.x, pos.y, pos.z)
+    -- threadpool:work(function ()
+    --     G_GameManager:WaitForSecond(0.1)
+    --     Actor:setPosition(self.obj_id, pos.x, pos.y, pos.z)
+    -- end)
+end
+
+function Entity:GetPos()
+	--获取某对象的坐标，参数为对象在存档中的id
+	local result,x, y, z=Actor:getPosition(self.obj_id)
+    if not x then
+        return
+    end
+    return Vector3.New(x, y, z)
+end
+
+function Entity:SetActionAttrState(type, state)
+    Actor:setActionAttrState(self:GetObjId(), type, state)
+end
+
+function Entity:GetActionAttrState(type)
+    local _, result = Actor:getActionAttrState(self:GetObjId(), type)
+    return result
+end
+
+
+function Entity:GetObjId()
+    return self.obj_id
+end
+
+function Entity:LookAt(pos)
+    if not pos then
+        return
+    end
+    local self_pos = self:GetPos()
+    if not self_pos then
+        return
+    end
+    local angle = CalcAngle({x = pos.x, y = pos.z}, {x = self_pos.x, y = self_pos.z})
+    Actor:setFaceYaw(self:GetObjId(), -angle-90)
+end
+
+function Entity:OnActorChangeMotion()
+    
+end
+
+function Entity:OnActorCreate()
+    
+end
+
+function Entity:OnActorBeHurt()
+    
+end
+
+function Entity:Die(killer_id)
+    
+end
+
+function Entity:OnPlayerClick(player_id)
+    
+end
+
+function Entity:KillEntity(target)
+    
+end
+
+function Entity:OnActorAttack(target_id)
+
+end
+
+function Entity:OnActorCollide(target_id)
+    
+end
+
+function Entity:AppendSpeed(dir)
+    Actor:appendSpeed(self:GetObjId(), dir.x, dir.y, dir.z)
+end
+
+function Entity:OnActorBeat(target_id)
+    
+end
+
+function Entity:SetTitleLabel(context, text_size, height)
+    height = height or 10
+    context = context or undefine_str
+    local obj_id = self:GetObjId()
+    if not obj_id then
+        return
+    end
+    
+    if self.graphid then
+        Graphics:removeGraphicsByObjID(obj_id, 1, 1)
+        self.graphid = nil
+    end
+    
+    local graphicsInfo=Graphics:makeGraphicsText(context, text_size, 0, 1)
+    local dir={x=0,y=height or normal_height,z=0}--偏移方向
+    --在实体上显示文字板
+    local result, graphid = Graphics:createGraphicsTxtByActor(obj_id, graphicsInfo, dir, 10, 0, 0)
+    self.graphid = graphid
+end
+
+function Entity:OnAttackHit(target_id)
+    
+end
+
+function Entity:TakeSkillDmg(target_id, mult)
+    
+end
+
+function Entity:GetAttr(type)
+	local result,value = Creature:getAttr(self:GetObjId(), type)
+    return value or 0
+end
+
+function Entity:KillSelf()
+	Actor:killSelf(self:GetObjId())
+end
+
+function Entity:GetOwner()
+    
+end
+
+function Entity:PlayAct(act)
+    Actor:playAct(self:GetObjId(), act)
+end
+
+function Entity:SetCreateAttr(type, value)
+    Creature:setAttr(self:GetObjId(), type, value)
+end
+
+function Entity:ChangeCustomModel(model_id)
+    Actor:changeCustomModel(self:GetObjId(), model_id)
+end
+
+function Entity:PlayBodyEffectById(id, size)
+    self:StopBodyEffectById(id)
+    Actor:playBodyEffectById(self:GetObjId(), id, size)
+end
+
+function Entity:StopBodyEffectById(id)
+    Actor:stopBodyEffectById(self:GetObjId(), id)
+end
+
+function Entity:PlayBodyLoopEffectById(id, size, time)
+    self:StopBodyLoopEffectById(id)
+    -- if not time or time <= 0 then
+    --     return
+    -- end
+    -- if self.loop_effect[id] then
+    --     table.insert(self.loop_effect[id], time)
+    --     return
+    -- else
+    --     self.loop_effect[id] = {}
+    --     table.insert(self.loop_effect[id], time)
+    -- end
+    Actor:playBodyEffectById(self:GetObjId(), id, size, time)
+    -- threadpool:work(function ()
+    --     while true do
+    --         if #self.loop_effect[id] == 0 then
+    --             break
+    --         end
+    --         local wait_time = table.remove(self.loop_effect[id], 1)
+    --         if not wait_time then
+    --             break
+    --         end
+    --         G_GameManager:WaitForSecond(wait_time)
+    --     end
+    --     self:StopBodyEffectById(id)
+    --     self.loop_effect[id] = nil
+    -- end)
+end
+
+function Entity:StopBodyLoopEffectById(id)
+    if not self.loop_effect[id] or not next(self.loop_effect[id]) then
+        return
+    end
+    self.loop_effect[id] = {}
+end
+
+function Entity:PlayLimitTimeBodyEffectById(id, size, time)
+    self:PlayBodyEffectById(id, size)
+    threadpool:work(function ()
+        G_GameManager:WaitForSecond(time)
+        self:StopBodyEffectById(id)
+    end)
+end
+
+function Entity:ActorHurt(entity, dmg, attack_type)
+    Actor:actorHurt(self:GetObjId(), entity:GetObjId(), dmg, attack_type)
+end
+
+function Entity:GetActorId()
+	local result,actorid = Creature:getActorID(self:GetObjId())
+    return actorid
+end
+
+function Entity:GetName()
+	local result,name = Creature:getActorName(self:GetObjId())
+    return name or ""
+end
+
+function Entity:GetIcon()
+    -- local icon = ""
+    -- local result,iconid = Customui:getMonsterIcon(self.config.actor_id)
+    -- icon = iconid or icon
+    return ""
+end
+
+function Entity:GetDef()    -- 减伤 只有怪物有
+    return 0
+end
+
+function Entity:InjuredSpecialDmg(prop_type, dmg)
+    self:DmgTips(prop_type, dmg)
+end
+
+function Entity:DmgTips(prop_type, dmg)
+    local config = G_ConfigManager.AttrConfig:GetAttrConfigByType(prop_type)
+    if not config then
+        return
+    end
+	local title = string.format(TIPS_CONST.DmgTipspStr, config.tips_color or "", config.name, NumToString(dmg, 1))--文字内容
+	local font=15--字体大小
+	local itype=prop_type--漂浮文字编号
+	--创建一个漂浮文字信息存到graphicsInfo中
+	local graphicsInfo=Graphics:makeflotageText(title, font, itype)
+	local dir={x=0,y=10,z=0}--偏移方向
+	local offset=prop_type--方向上的偏移距离
+	local x2 = 0--水平偏移距离
+	local y2 = 0--水平偏移距离
+	--在生物身上显示漂浮文字
+	local result,graphid = Graphics:createflotageTextByActor(self:GetObjId(), graphicsInfo, dir, offset, x2, y2)
+end
+
+function Entity:GetFaceDirection()
+    local result,dirx,diry,dirz = Actor:getFaceDirection(self:GetObjId())
+    if not dirx then
+        return
+    end
+    return Vector3.New(dirx, diry, dirz)
+end
+
+function Entity:GetFaceDirectionNoY()
+    local result,dirx,diry,dirz = Actor:getFaceDirection(self:GetObjId())
+    if not dirx then
+        return
+    end
+    return Vector3.New(dirx, 0, dirz)
+end
+
+function Entity:GetFacePosByDistance(dist)
+    dist = dist or 1
+    local pos = self:GetPos()
+    if not pos then
+        return
+    end
+    local face_dir = self:GetFaceDirection()
+    if not face_dir then
+        return
+    end
+    local in_front_x = pos.x + face_dir.x * dist
+    local in_front_z = pos.z + face_dir.z * dist
+    return Vector3.New(in_front_x, pos.y, in_front_z)
+end
+
+function Entity:GetYawPosByDistance(yaw, dist)
+    dist = dist or 1
+    local pos = self:GetPos()
+    if not pos then
+        return
+    end
+    local dir = CalcDirByYaw(yaw)
+    if not dir then
+        return
+    end
+    local in_front_x = pos.x + dir.x * dist
+    local in_front_z = pos.z + dir.z * dist
+    return Vector3.New(in_front_x, pos.y, in_front_z)
+end
+
+function Entity:ProjectileHit(info)
+    
+end
+
+function Entity:Destroy()
+    G_GameManager:DespawnActor(self:GetObjId())
+end
+
+function Entity:GetFaceYaw()
+    local result,yaw = Actor:getFaceYaw(self:GetObjId())
+    return yaw
+end
+
+function Entity:OnSelected()
+    self.selectedCounter = self.selectedCounter + 1
+    self:PlayBodyEffectById(EffectId.tips_6, 3)
+end
+
+function Entity:CancelSelected()
+    self.selectedCounter = math.max(self.selectedCounter - 1, 0)
+    if self.selectedCounter <= 0 then
+        self:StopBodyEffectById(EffectId.tips_6)
+    end
+end
+
+function Entity:MoveToPos(pos)
+    local res = Actor:tryNavigationToPos(self:GetObjId(), pos.x, pos.y, pos.z, true)
+	-- Actor:tryMoveToPos(self:GetObjId(),pos.x, pos.y, pos.z, 1)
+end
