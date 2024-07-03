@@ -3,7 +3,6 @@ local ConfigManager = Component.Manager.ConfigManager
 G_ConfigManager = G_ConfigManager or ConfigManager.New()
 G_ConfigManager:Init()
 
---这是一个测试
 
 local GameManager = Component.Manager.GameManager
 local EntityManager = Component.Manager.EntityManager
