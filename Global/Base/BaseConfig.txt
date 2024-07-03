@@ -1,3 +1,11 @@
+--[[
+功能描述: 
+Date: 2024-07-03 10:37:34
+LastEditors: crise sun
+LastEditTime: 2024-07-03 15:29:16
+FilePath: \blyx_minicode\Global\Base\BaseConfig.txt
+--]]
+print("--------------------------BaseConfig.txt: run")
 local BaseConfig = Component.Base.Config
 
 function BaseConfig:ctor(parent)

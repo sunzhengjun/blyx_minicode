@@ -1,3 +1,4 @@
+print("--------------------------MonsterBlock.txt: run")
 local MonsterBlock = Component.Model.MonsterBlock
 
 local block_id = 536

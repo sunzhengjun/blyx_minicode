@@ -1,3 +1,4 @@
+print("--------------------------GameManager.txt: run")
 local GameManager = Component.Manager.GameManager
 
 local ticket = 0.3

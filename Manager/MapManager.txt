@@ -1,3 +1,4 @@
+print("--------------------------MapManager.txt: run")
 local MapManager = Component.Manager.MapManager
 
 local Map = Component.Base.Map

@@ -1,3 +1,4 @@
+print("--------------------------CollectManager.txt: run")
 local CollectManager = Component.Manager.CollectManager
 
 function CollectManager:ctor()

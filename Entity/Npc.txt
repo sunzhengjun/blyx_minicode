@@ -1,3 +1,4 @@
+print("--------------------------Npc.txt: run")
 local Npc = Component.Entity.Npc
 
 local normal_height = 13

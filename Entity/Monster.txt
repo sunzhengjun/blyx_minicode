@@ -1,3 +1,4 @@
+print("--------------------------Monster.txt: run")
 local Monster = Component.Entity.Monster
 
 local normal_speed = 300

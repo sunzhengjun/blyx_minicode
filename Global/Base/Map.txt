@@ -1,3 +1,4 @@
+print("--------------------------Map.txt: run")
 local Map = Component.Base.Map
 
 -- local SafeZone = Component.Model.SafeZone

@@ -1,3 +1,4 @@
+print("--------------------------Block1.txt: run")
 local Block1 = Component.Base.Block1
 
 function Block1:ctor(pos)

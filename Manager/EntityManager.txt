@@ -1,3 +1,4 @@
+print("--------------------------EntityManager.txt: run")
 local EntityManager = Component.Manager.EntityManager
 
 function EntityManager:ctor()

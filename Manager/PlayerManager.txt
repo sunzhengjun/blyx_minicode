@@ -1,3 +1,4 @@
+print("--------------------------PlayerManager.txt: run")
 local PlayerManager = Component.Manager.PlayerManager
 local Player1 = Component.Entity.Player
 

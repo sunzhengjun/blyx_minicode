@@ -1,3 +1,11 @@
+--[[
+功能描述: 
+Date: 2024-07-03 10:37:34
+LastEditors: crise sun
+LastEditTime: 2024-07-03 15:29:31
+FilePath: \blyx_minicode\Global\Base\Entity.txt
+--]]
+print("--------------------------Entity.txt: run")
 local Entity = Component.Base.Entity
 
 local normal_height = 13

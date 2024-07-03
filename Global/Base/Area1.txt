@@ -1,3 +1,4 @@
+print("--------------------------Area1.txt: run")
 local Area1 = Component.Base.Area1
 
 function Area1:ctor(area_id)

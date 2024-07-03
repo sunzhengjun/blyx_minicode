@@ -1,5 +1,12 @@
+--[[
+功能描述: 
+Date: 2024-07-03 10:37:34
+LastEditors: crise sun
+LastEditTime: 2024-07-03 15:27:55
+FilePath: \blyx_minicode\Entity\UINpc.txt
+--]]
+print("--------------------------UINpc.txt: run")
 local UINpc = Component.Entity.UINpc
-
 function UINpc:ctor(id, npc_config)
     self.npc_config = npc_config
     self.panel_type = self.npc_config.panel_type

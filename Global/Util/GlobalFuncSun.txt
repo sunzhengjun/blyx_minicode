@@ -1,4 +1,5 @@
 
+print("--------------------------GlobalFuncSun.txt: run")
 --功能描述: 自用全局方法工具类，暂时跟框架代码分开
 
 --测试用日志
@@ -19,7 +20,6 @@ function LogSun(...)
             str = str .. "     "
         end
         print(str)
-        Chat:sendSystemMsg(str)
     end
 end
 

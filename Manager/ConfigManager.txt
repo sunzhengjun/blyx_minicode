@@ -1,3 +1,5 @@
+
+print("--------------------------ConfigManager.txt: run")
 local ConfigManager = Component.Manager.ConfigManager
 
 function ConfigManager:ctor()

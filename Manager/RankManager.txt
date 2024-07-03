@@ -1,3 +1,4 @@
+print("--------------------------RankManager.txt: run")
 local RankManager = Component.Manager.RankManager
 
 

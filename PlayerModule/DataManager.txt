@@ -1,3 +1,4 @@
+print("--------------------------DataManager.txt: run")
 local DataManager = Component.Player.DataManager
 --计时器
 

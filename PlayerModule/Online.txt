@@ -1,3 +1,4 @@
+print("--------------------------Online.txt: run")
 local Online = Component.Player.Online
 
 local player_online_str = "online_%s"

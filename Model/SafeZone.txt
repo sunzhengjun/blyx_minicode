@@ -1,3 +1,4 @@
+print("--------------------------SafeZone.txt: run")
 local SafeZone = Component.Model.SafeZone
 
 local enter_safe_zone_tips_str = "#G已进入安全区!"

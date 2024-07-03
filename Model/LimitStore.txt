@@ -1,3 +1,4 @@
+print("--------------------------LimitStore.txt: run")
 local LimitStore = Component.Model.LimitStore
 
 function LimitStore:ctor()

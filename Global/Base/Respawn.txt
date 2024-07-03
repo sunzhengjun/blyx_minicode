@@ -1,3 +1,4 @@
+print("--------------------------Respawn.txt: run")
 local Respawn = Component.Base.Respawn
 
 function Respawn:ctor(manager, config)

@@ -1,3 +1,11 @@
+--[[
+功能描述: 
+Date: 2024-07-03 10:37:34
+LastEditors: crise sun
+LastEditTime: 2024-07-03 15:30:53
+FilePath: \blyx_minicode\Global\Base\UIBase.txt
+--]]
+print("--------------------------UIBase.txt: run")
 local UIBase = Component.Base.UI
 
 function UIBase:ctor()
