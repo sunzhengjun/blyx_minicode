@@ -1,10 +1,4 @@
---[[
-功能描述: 
-Date: 2024-07-03 10:37:34
-LastEditors: crise sun
-LastEditTime: 2024-07-03 15:33:32
-FilePath: \blyx_minicode\Global\Config\AttrConfig.txt
---]]
+
 print("--------------------------AttrConfig.txt: run")
 local attr_config = {
     {name = [[最大生命值]], type = 1, pow = 0, rate = 0, actor_type = 1},

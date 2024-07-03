@@ -1,10 +1,4 @@
---[[
-功能描述: 
-Date: 2024-07-03 10:37:34
-LastEditors: crise sun
-LastEditTime: 2024-07-03 15:30:10
-FilePath: \blyx_minicode\Global\Base\PlayerModule.txt
---]]
+
 print("--------------------------PlayerModule.txt: run")
 local PlayerModule = Component.Base.PlayerModule
 
