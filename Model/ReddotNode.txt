@@ -1,4 +1,4 @@
-print("--------------------------ReddotNode.txt: run")
+print("------ReddotNode.txt: run")
 local ReddotNode = Component.Model.ReddotNode
 
 function ReddotNode:ctor(parent, children_info, playerId)

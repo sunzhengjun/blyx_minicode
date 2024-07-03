@@ -1,5 +1,5 @@
 
-print("--------------------------UINpc.txt: run")
+print("------UINpc.txt: run")
 local UINpc = Component.Entity.UINpc
 function UINpc:ctor(id, npc_config)
     self.npc_config = npc_config

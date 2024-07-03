@@ -1,4 +1,4 @@
-print("--------------------------GameOtherManager.txt: run")
+print("------GameOtherManager.txt: run")
 local GameOtherManager = Component.Manager.GameOtherManager
 
 local GodTreeArea = Component.Model.GodTreeArea

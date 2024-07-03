@@ -1,4 +1,4 @@
-print("--------------------------AdminConfig.txt: run")
+print("------AdminConfig.txt: run")
 local white_players = {--白名单 室长 米粒 13 兔子 龙，凉拌金桔 丁真
     [1238186092] = 1,
     [1724070151] = 1,

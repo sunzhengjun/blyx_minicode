@@ -1,4 +1,4 @@
-print("--------------------------Recharge.txt: run")
+print("------Recharge.txt: run")
 local Recharge = Component.Player.Recharge
 
 function Recharge:ctor()

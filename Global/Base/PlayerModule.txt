@@ -1,5 +1,5 @@
 
-print("--------------------------PlayerModule.txt: run")
+print("------PlayerModule.txt: run")
 local PlayerModule = Component.Base.PlayerModule
 
 function PlayerModule:ctor(player)

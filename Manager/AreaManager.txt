@@ -1,4 +1,4 @@
-print("--------------------------AreaManager.txt: run")
+print("------AreaManager.txt: run")
 local AreaManager = Component.Manager.AreaManager
 
 function AreaManager:ctor()

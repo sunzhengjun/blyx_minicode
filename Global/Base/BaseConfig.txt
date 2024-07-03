@@ -1,5 +1,5 @@
 
-print("--------------------------BaseConfig.txt: run")
+print("------BaseConfig.txt: run")
 local BaseConfig = Component.Base.Config
 
 function BaseConfig:ctor(parent)

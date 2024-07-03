@@ -1,4 +1,4 @@
-print("--------------------------Vector3.txt: run")
+print("------Vector3.txt: run")
 local acos	= math.acos
 local sqrt 	= math.sqrt
 local max 	= math.max

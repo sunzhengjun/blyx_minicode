@@ -1,5 +1,5 @@
 -- 先加载配置
-print("--------------------------Program.txt: run")
+print("------Program.txt: run")
 local ConfigManager = Component.Manager.ConfigManager
 G_ConfigManager = G_ConfigManager or ConfigManager.New()
 G_ConfigManager:Init()

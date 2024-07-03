@@ -1,4 +1,4 @@
-print("--------------------------DailyTask.txt: run")
+print("------DailyTask.txt: run")
 local DailyTask = Component.Player.DailyTask
 
 function DailyTask:ctor()

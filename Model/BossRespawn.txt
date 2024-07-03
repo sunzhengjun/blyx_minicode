@@ -1,4 +1,4 @@
-print("--------------------------BossRespawn.txt: run")
+print("------BossRespawn.txt: run")
 local BossRespawn = Component.Model.BossRespawn
 
 

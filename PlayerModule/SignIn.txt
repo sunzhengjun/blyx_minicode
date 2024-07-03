@@ -1,4 +1,4 @@
-print("--------------------------SignIn.txt: run")
+print("------SignIn.txt: run")
 local SignIn = Component.Player.SignIn
 
 function SignIn:ctor()

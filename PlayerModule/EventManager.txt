@@ -1,4 +1,4 @@
-print("--------------------------EventManager.txt: run")
+print("------EventManager.txt: run")
 local EventManager = Component.Player.EventManager
 
 function EventManager:ctor(player)

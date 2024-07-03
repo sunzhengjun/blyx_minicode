@@ -1,5 +1,5 @@
 
-print("--------------------------AttrConfig.txt: run")
+print("------AttrConfig.txt: run")
 local attr_config = {
     {name = [[最大生命值]], type = 1, pow = 0, rate = 0, actor_type = 1},
     {name = [[攻击力]], type = 2, pow = 0, rate = 0},

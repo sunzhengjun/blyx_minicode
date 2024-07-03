@@ -1,5 +1,5 @@
 
-print("--------------------------UIBase.txt: run")
+print("------UIBase.txt: run")
 local UIBase = Component.Base.UI
 
 function UIBase:ctor()

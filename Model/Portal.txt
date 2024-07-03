@@ -1,4 +1,4 @@
-print("--------------------------Portal.txt: run")
+print("------Portal.txt: run")
 local Portal = Component.Model.Portal
 
 local tipsContext = "是否花费%s*%s解锁[%s]?"

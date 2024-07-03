@@ -1,4 +1,4 @@
-print("--------------------------DetailInfo.txt: run")
+print("------DetailInfo.txt: run")
 local DetailInfo = Component.Player.DetailInfo
 
 local stage_up_tips_min_interval = 5

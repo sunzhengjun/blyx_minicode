@@ -1,4 +1,4 @@
-print("--------------------------NpcManager.txt: run")
+print("------NpcManager.txt: run")
 local NpcManager = Component.Manager.NpcManager
 
 local Npc = Component.Entity.Npc

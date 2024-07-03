@@ -1,4 +1,4 @@
-print("--------------------------Class.txt: run")
+print("------Class.txt: run")
 function Class(super)
     local class
     if super then

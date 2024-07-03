@@ -1,4 +1,4 @@
-print("--------------------------CommonRespawn.txt: run")
+print("------CommonRespawn.txt: run")
 local CommonRespawn = Component.Model.CommonRespawn
 
 

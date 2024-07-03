@@ -1,4 +1,4 @@
-print("--------------------------MonsterManager.txt: run")
+print("------MonsterManager.txt: run")
 local MonsterManager = Component.Manager.MonsterManager
 
 local Monster = Component.Entity.Monster

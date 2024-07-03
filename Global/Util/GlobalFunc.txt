@@ -1,5 +1,5 @@
 --数字转汉字
-print("--------------------------GlobalFunc.txt: run")
+print("------GlobalFunc.txt: run")
 local numeric_units = {
     {min = 10^16, name = "京"},
     {min = 10^12, name = "兆"},

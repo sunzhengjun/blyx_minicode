@@ -1,4 +1,4 @@
-print("--------------------------LogManager.txt: run")
+print("------LogManager.txt: run")
 local LogManager = Component.Manager.LogManager
 
 function LogManager:ctor()

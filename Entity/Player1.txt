@@ -1,4 +1,4 @@
-print("--------------------------Player1.txt: run")
+print("------Player1.txt: run")
 local Player1 = Component.Entity.Player
 
 local UIManager = Component.Player.UIManager

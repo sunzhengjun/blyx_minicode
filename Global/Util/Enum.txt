@@ -1,4 +1,4 @@
-print("--------------------------Enum.txt: run")
+print("------Enum.txt: run")
 PLAYER_ATTR_TYPE = {
     maxHp = 1,  -- 最大生命值
     atk = 2,    -- 攻击力

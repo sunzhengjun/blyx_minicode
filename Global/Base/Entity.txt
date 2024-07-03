@@ -1,5 +1,5 @@
 
-print("--------------------------Entity.txt: run")
+print("------Entity.txt: run")
 local Entity = Component.Base.Entity
 
 local normal_height = 13

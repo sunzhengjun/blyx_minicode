@@ -1,4 +1,4 @@
-print("--------------------------BlockRespawn.txt: run")
+print("------BlockRespawn.txt: run")
 local BlockRespawn = Component.Model.BlockRespawn
 
 local MonsterBlock = Component.Model.MonsterBlock

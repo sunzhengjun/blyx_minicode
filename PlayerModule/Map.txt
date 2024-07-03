@@ -1,4 +1,4 @@
-print("--------------------------Map.txt: run")
+print("------Map.txt: run")
 local Map = Component.Player.Map
 
 

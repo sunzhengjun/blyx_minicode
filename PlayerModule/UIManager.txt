@@ -1,4 +1,4 @@
-print("--------------------------UIManager.txt: run")
+print("------UIManager.txt: run")
 local UIManager = Component.Player.UIManager
 
 local panel_list = {

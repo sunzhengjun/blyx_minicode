@@ -1,4 +1,4 @@
-print("--------------------------InputManager.txt: run")
+print("------InputManager.txt: run")
 local InputManager = Component.Player.InputManager
 
 function InputManager:ctor(player)

@@ -1,4 +1,4 @@
-print("--------------------------RespawnManager.txt: run")
+print("------RespawnManager.txt: run")
 local RespawnManager = Component.Manager.RespawnManager
 
 local BossRespawn = Component.Model.BossRespawn

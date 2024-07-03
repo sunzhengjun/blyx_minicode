@@ -1,4 +1,4 @@
-print("--------------------------EventBlockManager.txt: run")
+print("------EventBlockManager.txt: run")
 local EventBlockManager = Component.Manager.EventBlockManager
 
 function EventBlockManager:ctor()
