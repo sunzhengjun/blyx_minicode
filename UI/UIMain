@@ -1,0 +1,51 @@
+local UIMain = Component.UI.Main
+
+local uiid = "7387345971044937644"
+local close_button = "close_button"
+local panel_type = "Main"
+
+local panel = {
+    testButton = "7387345971044937644_1",
+
+}
+
+function UIMain:ctor(player, ui_manager)
+    self.player = player
+    self.ui_manager = ui_manager
+end
+
+function UIMain:Init()
+    
+end
+
+function UIMain:InitPanel()
+
+end
+
+function UIMain:OnClose()
+    
+end
+
+function UIMain:Close()
+    self.player.UIManager:CloseUI(panel_type)
+end
+
+function UIMain:OnUIButtonClick(e)
+    local hit = true
+    if e.btnelenemt == close_button then
+        self:Close()
+    elseif e.btnelenemt == panel.testButton then
+        print("点击了按钮")
+    else
+        hit = false
+    end
+
+    if hit then
+        return
+    end
+    
+end
+
+function UIMain:OnLostFocus(e)
+    
+end

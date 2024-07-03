@@ -2,7 +2,7 @@ print("------UIManager.txt: run")
 local UIManager = Component.Player.UIManager
 
 local panel_list = {
-    -- Main = {uiid = "7366514520665878444"},
+    Main = {uiid = "7387345971044937644"},
     -- Auto = {uiid = "7368765186608197548"},
     -- GM = {uiid = "7379141806120497068"},
     -- Skill = {uiid = "7369461941972758444"},
@@ -53,7 +53,8 @@ function UIManager:Init()
 end
 
 function UIManager:OnLoadDone()
-    -- self:OpenUI(UIPanel.Main)
+    LogSun("UIManager:OnLoadDone()")
+    self:OpenUI(UIPanel.Main)
     -- self:OpenUI(UIPanel.Auto)
     -- self:OpenUI(UIPanel.ItemTips)
     -- self:OpenUI(UIPanel.Tips)

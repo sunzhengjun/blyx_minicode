@@ -43,6 +43,7 @@ G_PlayerManager:Init()
 -- G_StageUpManager:Init()
 
 local function main()
+
     local res, ret = pcall(function ()
         -- G_MapManager:Init()
         -- G_NpcManager:Init()
@@ -50,6 +51,7 @@ local function main()
         G_RankManager:Init()
         G_CollectManager:Init()
         G_GameManager:GameInitDone()
+        LogSun("游戏开始，初始化")
     
     -- 保持最后
         -- G_GameOtherManager:Init()
